@@ -4,7 +4,14 @@ using System.Collections;
 
 public abstract class BuffBase : BaseObject, IEffectable {
 	protected BuffConfigBase buffConfig;
+	public BuffConfigBase BuffConfig {
+		get {
+			return buffConfig;
+		}
+	}
+
 	protected CharacterBase character;
+	protected CharacterBase caster;
 	long latestEffectTime;
 	public long LatestEffectTime {
 		get {
@@ -43,7 +50,7 @@ public abstract class BuffBase : BaseObject, IEffectable {
 
 	public BuffBase() {
 		latestEffectTime = -1;
-		stackedCount = 0;
+		stackedCount = 1;
 		effectTimes = 0;
 		passedTime = 0;
 	}
@@ -58,21 +65,35 @@ public abstract class BuffBase : BaseObject, IEffectable {
 		effectValue.Set (buffConfig.effectValue);
 	}
 
-	protected virtual void OnBuffOver () {
-		
+	public void CastTo(CharacterBase character, CharacterBase caster) {
+		this.character = character;
+		this.caster = caster;
+		var characterBuff = character.GetBuff (buffConfig.kindId, caster);
+		if (characterBuff == null) {
+			character.AddBuff (this, caster);
+			TimeManager.GetInstance ().RegistBaseObject (this);
+		} else {
+			characterBuff.AddStacked ();
+		}
 	}
 
-	public void SetCharacter(CharacterBase character) {
-		Debug.Log ("Set character");
-		this.character = character;
-		TimeManager.GetInstance ().RegistBaseObject (this);
+	protected virtual void AddStacked () {
+		if (stackedCount + 1 <= maxStackedCount.Value) {
+			stackedCount++;
+		}
+
+		RefreshTimeLeft ();
+	}
+
+	void RefreshTimeLeft () {
+		timeLeft = duration.Value;
 	}
 
 	public DAMAGE_SOURCE_TYPE GetDamageSourceType() {
 		return DAMAGE_SOURCE_TYPE.BUFF;
 	}
 	public CharacterBase GetCaster() {
-		return character;
+		return caster;
 	}
 
 	public override void Update(long deltaTime) {
@@ -90,8 +111,12 @@ public abstract class BuffBase : BaseObject, IEffectable {
 		}
 	}
 
+	protected virtual void OnBuffOver () {
+		
+	}
+
 	public void RemoveBuff () {
-		character.RemoveBuff (this);
+		character.RemoveBuff (this, caster);
 		TimeManager.GetInstance ().UnregistBaseObject (this);
 	}
 
@@ -104,7 +129,11 @@ public abstract class BuffBase : BaseObject, IEffectable {
 			latestEffectTime = 0;
 		}
 		int effectTimes = 0;
-		while(latestEffectTime + effectInterval.Value <= PassedTime && effectTimes < 4) {
+
+		Debug.Assert (effectInterval.Value > 0);
+		Debug.Assert ((PassedTime - latestEffectTime) / effectInterval.Value < 100);
+
+		while(latestEffectTime + effectInterval.Value <= PassedTime) {
 			long interval = effectInterval.Value;
 			Effective ();
 			latestEffectTime += interval;

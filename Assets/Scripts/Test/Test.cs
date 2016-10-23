@@ -7,12 +7,15 @@ using System.Collections.Generic;
 public class Test : MonoBehaviour {
 	[SerializeField] CharacterView view;
 	[SerializeField] Button dotButton;
+
+	TestMonster me = new TestMonster();
 	// Use this for initialization
 	void Start () {
 		view.Init (new TestMonster ());
 
 		dotButton.onClick.AddListener (() => {
-			view.Character.AddBuff (BuffFactory.GetInstance().CreateBuff("buff_0"));
+			var buff = BuffFactory.GetInstance().CreateBuff("buff_0");
+			buff.CastTo(view.Character, me);
 		});
 	}
 	

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public abstract class CharacterBase : BaseObject {
 	ChangableInt maxHp = new ChangableInt();
 	int curHp;
-	List<BuffBase> buffList = new List<BuffBase> ();
+	Dictionary<long, Dictionary<string, BuffBase>> buffList = new Dictionary<long, Dictionary<string, BuffBase>> ();
 	public BaseDelegateV<int> onHpChanged;
 	public BaseDelegateV<int> onMaxHpChanged;
 
@@ -60,13 +60,41 @@ public abstract class CharacterBase : BaseObject {
 		SetCurHp (hp);
 	}
 
-	public void AddBuff(BuffBase buff) {
-		buffList.Add (buff);
-		buff.SetCharacter (this);
+	public BuffBase GetBuff (string buffKindId, CharacterBase caster) {
+		if (buffList.ContainsKey(caster.Id) == false) {
+			return null;
+		}
+
+		var list = buffList [caster.Id];
+		if (list.ContainsKey(buffKindId) == false) {
+			return null;
+		}
+
+		return list [buffKindId];
 	}
 
-	public void RemoveBuff(BuffBase buff) {
-		buffList.Remove (buff);
+	Dictionary<string, BuffBase> GetBuffList(long casterId) {
+		if (buffList.ContainsKey(casterId) == false) {
+			buffList.Add (casterId, new Dictionary<string, BuffBase> ());
+		}
+		return buffList [casterId];
+	}
+
+	public void AddBuff(BuffBase buff, CharacterBase caster) {
+		GetBuffList (caster.Id).Add (buff.BuffConfig.kindId, buff);
+	}
+
+	public void RemoveBuff(BuffBase buff, CharacterBase caster) {
+		if (buffList.ContainsKey(caster.Id) == false) {
+			return;
+		}
+		var list = buffList [caster.Id];
+		if (list.ContainsKey(buff.BuffConfig.kindId)) {
+			list.Remove (buff.BuffConfig.kindId);
+			if (list.Count == 0) {
+				buffList.Remove (caster.Id);
+			}
+		}
 	}
 
 	public void AddHp(int x) {
