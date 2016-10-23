@@ -49,15 +49,16 @@ public abstract class CharacterBase : BaseObject {
 	}
 
 	void InitProperty () {
-		propertyMax.Add (PROPERTY.HP, new ChangableInt(1000));
+		propertyMax.Add (PROPERTY.HP, new ChangableInt(100));
 		propertyMax.Add (PROPERTY.MP, new ChangableInt(1000));
 		foreach (var property in propertyMax) {
+			var curType = property.Key;
 			property.Value.onValueChanged += (int val) => {
-				OnPropertyMaxChanged (property.Key, val);
+				OnPropertyMaxChanged (curType, val);
 			};
 		}
 
-		currentProperties.Add (PROPERTY.HP, 1000);
+		currentProperties.Add (PROPERTY.HP, 100);
 		currentProperties.Add (PROPERTY.MP, 1000);
 	}
 
