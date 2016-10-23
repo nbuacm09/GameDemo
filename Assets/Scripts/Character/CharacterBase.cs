@@ -3,61 +3,93 @@ using System.Collections;
 using System.Collections.Generic;
 
 public abstract class CharacterBase : BaseObject {
-	ChangableInt maxHp = new ChangableInt();
-	int curHp;
-	Dictionary<long, Dictionary<string, BuffBase>> buffList = new Dictionary<long, Dictionary<string, BuffBase>> ();
-	public BaseDelegateV<int> onHpChanged;
-	public BaseDelegateV<int> onMaxHpChanged;
+	#region property
+	Dictionary<PROPERTY, ChangableInt> propertyMax = new Dictionary<PROPERTY, ChangableInt> ();
+	Dictionary<PROPERTY, int> currentProperties = new Dictionary<PROPERTY, int> ();
+	public delegate void PropertyChangedDelegate (PROPERTY type, int val);
+	public PropertyChangedDelegate onPropertyChanged;
+	public PropertyChangedDelegate onPropertyMaxChanged;
+
+	public ChangableInt GetPropertyMax(PROPERTY type) {
+		Debug.Assert (propertyMax.ContainsKey (type));
+		return propertyMax [type];
+	}
+
+	public int GetPropertyMaxValue(PROPERTY type) {
+		Debug.Assert (propertyMax.ContainsKey (type));
+		return propertyMax [type].Value;
+	}
+
+	public int GetProperty(PROPERTY type) {
+		Debug.Assert (currentProperties.ContainsKey (type));
+		return currentProperties [type];
+	}
+
+	public void SetProperty(PROPERTY type, int val) {
+		Debug.Assert (currentProperties.ContainsKey (type));
+		int originalVal = GetProperty (type);
+		int limit = GetPropertyMaxValue (type);
+		val = MathFunc.Clamp<int> (val, 0, limit);
+		if (val != originalVal) {
+			currentProperties [type] = val;
+			if (onPropertyChanged != null) {
+				onPropertyChanged (type, val);
+			}
+		}
+	}
+	public void AddProperty(PROPERTY type, int val) {
+		SetProperty (type, GetProperty (type) + val);
+	}
+
+	private void OnPropertyMaxChanged(PROPERTY type, int val) {
+		SetProperty (type, val);
+		if (onPropertyChanged != null) {
+			onPropertyChanged (type, val);
+		}
+	}
+
+	void InitProperty () {
+		propertyMax.Add (PROPERTY.HP, new ChangableInt(1000));
+		propertyMax.Add (PROPERTY.MP, new ChangableInt(1000));
+		foreach (var property in propertyMax) {
+			property.Value.onValueChanged += (int val) => {
+				OnPropertyMaxChanged (property.Key, val);
+			};
+		}
+
+		currentProperties.Add (PROPERTY.HP, 1000);
+		currentProperties.Add (PROPERTY.MP, 1000);
+	}
 
 	public int MaxHp{
 		get{
-			return maxHp.Value;
+			return GetPropertyMaxValue(PROPERTY.HP);
 		}
 	}
 	public int Hp{
 		get{
-			return curHp;
+			return GetProperty(PROPERTY.HP);
 		}
 	}
+
+	public int MaxMp{
+		get{
+			return GetPropertyMaxValue(PROPERTY.MP);
+		}
+	}
+	public int Mp{
+		get{
+			return GetProperty(PROPERTY.MP);;
+		}
+	}
+
+	#endregion
+
+	Dictionary<long, Dictionary<string, BuffBase>> buffList = new Dictionary<long, Dictionary<string, BuffBase>> ();
+	public DataProcessDelegate<double> damageProcess;
 
 	public CharacterBase() {
-		maxHp.onValueChanged = OnMaxHpChanged;
-		InitHp (GetInitHp ()); 
-	}
-
-	private void OnMaxHpChanged(int val) {
-		SetCurHp (curHp);
-		if (onMaxHpChanged != null)
-		{
-			onMaxHpChanged (val);
-		}
-	}
-
-	public abstract int GetInitHp ();
-
-	private void SetMaxHp(int val) {
-		maxHp.Set(val);
-	}
-
-	private void SetCurHp(int val) {
-		int lastHp = curHp;
-		curHp = val;
-		if (curHp < 0) {
-			curHp = 0;
-		}
-		if (curHp >= maxHp.Value) {
-			curHp = maxHp.Value;
-		}
-		if (lastHp != curHp) {
-			if (onHpChanged != null) {
-				onHpChanged (curHp);
-			}
-		}
-	}
-
-	private void InitHp(int hp) {
-		SetMaxHp (hp);
-		SetCurHp (hp);
+		InitProperty ();
 	}
 
 	public BuffBase GetBuff (string buffKindId, CharacterBase caster) {
@@ -97,11 +129,11 @@ public abstract class CharacterBase : BaseObject {
 		}
 	}
 
-	public void AddHp(int x) {
-		SetCurHp (curHp + x);
-	}
-
-	public void Damage(int damageValue, IEffectable effect) {
-		AddHp (-damageValue);
+	public void Damage(double damageValue, IEffectable effect) {
+		if (damageProcess != null) {
+			damageProcess (ref damageValue);
+		}
+		int realDamage = (int)damageValue;
+		AddProperty (PROPERTY.HP, -realDamage);
 	}
 }

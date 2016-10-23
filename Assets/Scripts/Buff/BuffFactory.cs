@@ -23,7 +23,18 @@ public class BuffFactory : Singleton<BuffFactory> {
 		BuffBase ret = null;
 		switch (kindId) {
 		case "buff_0":
-			ret = new BuffDot ();
+			ret = new BuffPunch ();
+			break;
+
+
+		case "durationbuff_0":
+			ret = new DurationBuffDot ();
+			break;
+		case "durationbuff_1":
+			ret = new DurationBuffEnhanceDamage ();
+			break;
+		case "durationbuff_2":
+			ret = new DurationBuffBombAfterHealth ();
 			break;
 		}
 		return ret;

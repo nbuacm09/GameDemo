@@ -2,6 +2,6 @@
 using System.Collections;
 
 public interface IEffectable {
-	DAMAGE_SOURCE_TYPE GetDamageSourceType();
+	EFFECT_PROPERTY_TYPE GetEffectProperty();
 	CharacterBase GetCaster();
 }

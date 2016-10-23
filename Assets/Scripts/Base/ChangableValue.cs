@@ -3,32 +3,36 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public abstract class ChangableValue<T>
-{
-	public enum ChangeType
-	{
-		MULTI,
-		ADD
-	};
-	public struct ChangeMethod
-	{
-		public WeakReference obj;
-		public ChangeType type;
-		public double changedVal;
-		public void Operate(ref double val)
-		{
-			switch(type)
-			{
-			case ChangeType.ADD:
-				val += changedVal;
-				break;
-			case ChangeType.MULTI:
-				val *= changedVal;
-				break;
-			}
-		}
+public enum ChangeType {
+	MULTI,
+	ADD
+};
+
+public struct ChangeMethod {
+	public WeakReference refObj;
+	public ChangeType type;
+	public double changedVal;
+
+	public ChangeMethod (ChangeType type, double changedVal, object refObj = null) {
+		this.type = type;
+		this.changedVal = changedVal;
+		this.refObj = refObj == null ? null : new WeakReference(refObj);
 	}
 
+	public void Operate(ref double val) {
+		switch(type)
+		{
+		case ChangeType.ADD:
+			val += changedVal;
+			break;
+		case ChangeType.MULTI:
+			val *= changedVal;
+			break;
+		}
+	}
+}
+
+public abstract class ChangableValue<T> {
 	public BaseDelegateV<T> onValueChanged;
 
 	LinkedList<ChangeMethod> changes = new LinkedList<ChangeMethod>();
@@ -36,8 +40,15 @@ public abstract class ChangableValue<T>
 	T val;
 	T finalVal;
 
-	public void Init(T val)
-	{
+	public ChangableValue () {
+
+	}
+
+	public ChangableValue (T val) {
+		Init (val);
+	}
+
+	public void Init(T val) {
 		ClearChange ();
 		Set (val);
 	}
@@ -45,20 +56,17 @@ public abstract class ChangableValue<T>
 	protected abstract double ToDouble (T val);
 	protected abstract T FromDouble (double val);
 
-	public void Set(T val)
-	{
+	public void Set(T val) {
 		this.val = val;
 		dirty = true;
 	}
 
-	public void AddChangeMethod(ChangeMethod method)
-	{
+	public void AddChangeMethod(ChangeMethod method) {
 		changes.AddLast(method);
 		dirty = true;
 	}
 
-	public void ClearChange()
-	{
+	public void ClearChange() {
 		changes.Clear ();
 		dirty = true;
 	}
@@ -78,7 +86,7 @@ public abstract class ChangableValue<T>
 					var cur = it;
 					it = it.Next;
 					var method = cur.Value;
-					if (method.obj.IsAlive == false) {
+					if (method.refObj != null && method.refObj.IsAlive == false) {
 						changes.Remove (cur);
 					} else {
 						method.Operate (ref ret);
@@ -97,6 +105,14 @@ public abstract class ChangableValue<T>
 
 
 public class ChangableInt : ChangableValue<int> {
+	public ChangableInt () : base() {
+
+	}
+
+	public ChangableInt (int val) : base(val) {
+		
+	}
+
 	protected override double ToDouble (int val) {
 		return (double)val;
 	}
@@ -106,10 +122,34 @@ public class ChangableInt : ChangableValue<int> {
 }
 
 public class ChangableLong : ChangableValue<long> {
+	public ChangableLong () : base() {
+
+	}
+
+	public ChangableLong (long val) : base(val) {
+
+	}
+
 	protected override double ToDouble (long val) {
 		return (double)val;
 	}
 	protected override long FromDouble (double val) {
 		return (long)val;
+	}
+}
+
+public class ChangableDouble : ChangableValue<double> {
+	public ChangableDouble () : base() {
+	
+	}
+	public ChangableDouble (double val) : base(val) {
+
+	}
+
+	protected override double ToDouble (double val) {
+		return val;
+	}
+	protected override double FromDouble (double val) {
+		return val;
 	}
 }

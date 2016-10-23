@@ -1,11 +1,7 @@
-﻿public enum DAMAGE_TYPE {
+﻿public enum EFFECT_PROPERTY_TYPE {
+	NO,
 	FIRE,
 	ICE,
 	LIGHT,
 	DARK
-}
-
-public enum DAMAGE_SOURCE_TYPE {
-	SKILL,
-	BUFF
 }

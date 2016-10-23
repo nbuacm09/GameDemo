@@ -3,8 +3,7 @@ using System;
 using System.Reflection;
 using System.Collections;
 
-public static class CommonFunctions {
-
+public static class DataFunc {
 	public static T DeepCopy<T> (T obj) {
 		if (obj is string || obj.GetType ().IsValueType) {
 			return obj;
