@@ -22,3 +22,15 @@ public abstract class BaseObject
 		
 	}
 }
+
+public abstract class FactoryObject : BaseObject {
+	protected ConfigBaseObject config;
+	public ConfigBaseObject Config {
+		get {
+			return config;
+		}
+	}
+	public virtual void InitWithConfig (ConfigBaseObject configObject) {
+		this.config = configObject;
+	}
+}

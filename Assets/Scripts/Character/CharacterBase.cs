@@ -2,7 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public abstract class CharacterBase : BaseObject {
+public abstract class CharacterBase : FactoryObject {
+	public CharacterConfigBase CharacterConfig{
+		get {
+			return Config as CharacterConfigBase;
+		}
+	}
+
+	public CharacterBase() {
+		InitProperty ();
+		InitLearnedBuff ();
+	}
+
+	public override void InitWithConfig (ConfigBaseObject configObj) {
+		base.InitWithConfig (configObj);
+		var characterConfig = configObj as CharacterConfigBase;
+		Debug.Assert (characterConfig != null);
+
+		// TODO
+	}
+
 	#region property
 	Dictionary<PROPERTY, ChangableInt> propertyMax = new Dictionary<PROPERTY, ChangableInt> ();
 	Dictionary<PROPERTY, int> currentProperties = new Dictionary<PROPERTY, int> ();
@@ -49,6 +68,7 @@ public abstract class CharacterBase : BaseObject {
 	}
 
 	void InitProperty () {
+		// TODO: read from config
 		propertyMax.Add (PROPERTY.HP, new ChangableInt(100));
 		propertyMax.Add (PROPERTY.MP, new ChangableInt(1000));
 		foreach (var property in propertyMax) {
@@ -86,14 +106,75 @@ public abstract class CharacterBase : BaseObject {
 
 	#endregion
 
-	Dictionary<long, Dictionary<string, BuffBase>> buffList = new Dictionary<long, Dictionary<string, BuffBase>> ();
-	public DataProcessDelegate<double> damageProcess;
-
-	public CharacterBase() {
-		InitProperty ();
+	#region skill
+	HashSet<string> skillList = new HashSet<string> ();
+	Dictionary<string, long> skillCdTime = new Dictionary<string, long> ();
+	public DataProcessDelegate<SkillBase> castedSkillProcess;
+	public BaseDelegateV<string> onSkillLearned;
+	public void LearnBuff (string buffKindId) {
+		skillList.Add (buffKindId);
+		if (onSkillLearned != null) {
+			onSkillLearned (buffKindId);
+		}
 	}
 
-	public BuffBase GetBuff (string buffKindId, CharacterBase caster) {
+	void InitLearnedBuff () {
+		// TODO: read from config
+		skillList.Add ("buff_0");
+		skillList.Add ("buff_1");
+		skillList.Add ("buff_2");
+
+		skillList.Add ("skill_0");
+	}
+
+	public SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
+		#region check if I can cast skill
+		if (SkillIsLearned (skillKindId) == false) {
+			return SKILL_CAST_RESULT.DISABLE;
+		}
+
+		var skill = SkillFactory.GetInstance ().Create (skillKindId);
+		if (castedSkillProcess != null) {
+			castedSkillProcess (ref skill);
+		}
+
+		// special check by different buff.
+		var buffCheckResult = skill.CheckBeforeCast (this, target);
+		if (buffCheckResult != SKILL_CAST_RESULT.SUCCEED) {
+			return buffCheckResult;
+		}
+
+		if (skill.manaCost.Value > Mp) {
+			return SKILL_CAST_RESULT.NOT_ENOUGH_MANA;
+		}
+
+		if (GetSkillCd (skillKindId) > 0) {
+			return SKILL_CAST_RESULT.IN_CD;
+		}
+		#endregion
+
+		skill.CastTo (target, this);
+
+		return SKILL_CAST_RESULT.SUCCEED;
+	}
+
+	public bool SkillIsLearned (string skillKindId) {
+		return skillList.Contains (skillKindId);
+	}
+
+	public long GetSkillCd (string skillKindId) {
+		if (skillCdTime.ContainsKey(skillKindId)) {
+			return skillCdTime [skillKindId];
+		} else {
+			return 0;
+		}
+	}
+	#endregion
+
+	#region buff on body
+	Dictionary<long, Dictionary<string, SkillBase>> buffList = new Dictionary<long, Dictionary<string, SkillBase>> ();
+	public BaseDelegateV<BuffBase> onNewBuffAppended;
+	public SkillBase GetBuff (string buffKindId, CharacterBase caster) {
 		if (buffList.ContainsKey(caster.Id) == false) {
 			return null;
 		}
@@ -106,29 +187,36 @@ public abstract class CharacterBase : BaseObject {
 		return list [buffKindId];
 	}
 
-	Dictionary<string, BuffBase> GetBuffList(long casterId) {
+	Dictionary<string, SkillBase> GetBuffList(long casterId) {
 		if (buffList.ContainsKey(casterId) == false) {
-			buffList.Add (casterId, new Dictionary<string, BuffBase> ());
+			buffList.Add (casterId, new Dictionary<string, SkillBase> ());
 		}
 		return buffList [casterId];
 	}
 
 	public void AddBuff(BuffBase buff, CharacterBase caster) {
-		GetBuffList (caster.Id).Add (buff.BuffConfig.kindId, buff);
+		GetBuffList (caster.Id).Add (buff.SkillConfig.kindId, buff);
+		if (onNewBuffAppended != null) {
+			onNewBuffAppended (buff);
+		}
 	}
 
-	public void RemoveBuff(BuffBase buff, CharacterBase caster) {
+	public void RemoveBuff(SkillBase buff, CharacterBase caster) {
 		if (buffList.ContainsKey(caster.Id) == false) {
 			return;
 		}
 		var list = buffList [caster.Id];
-		if (list.ContainsKey(buff.BuffConfig.kindId)) {
-			list.Remove (buff.BuffConfig.kindId);
+		if (list.ContainsKey(buff.SkillConfig.kindId)) {
+			list.Remove (buff.SkillConfig.kindId);
 			if (list.Count == 0) {
 				buffList.Remove (caster.Id);
 			}
 		}
 	}
+	#endregion
+
+	#region damage
+	public DataProcessDelegate<double> damageProcess;
 
 	public void Damage(double damageValue, IEffectable effect) {
 		if (damageProcess != null) {
@@ -137,4 +225,5 @@ public abstract class CharacterBase : BaseObject {
 		int realDamage = (int)damageValue;
 		AddProperty (PROPERTY.HP, -realDamage);
 	}
+	#endregion
 }

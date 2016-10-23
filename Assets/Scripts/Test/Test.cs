@@ -13,25 +13,29 @@ public class Test : MonoBehaviour {
 	[SerializeField] GameObject buffPanel;
 	[SerializeField] GameObject buffViewPrefab;
 
-	TestMonster me = new TestMonster();
+	CharacterBase me;
 	// Use this for initialization
 	void Start () {
-		view.Init (new TestMonster ());
+		me = CharacterFactory.GetInstance ().Create ("character_0");
+
+		var enemy = CharacterFactory.GetInstance ().Create ("character_1");
+		enemy.onNewBuffAppended += OnNewBuffAppendedOnEnemy;
+		view.Init (enemy);
 
 		dotButton.onClick.AddListener (() => {
-			CreateBuff("durationbuff_0");
+			CastSkill("buff_0");
 		});
 
 		damageButton.onClick.AddListener (() => {
-			CreateBuff("durationbuff_1");
+			CastSkill("buff_1");
 		});
 
 		healthBombButton.onClick.AddListener (() => {
-			CreateBuff("durationbuff_2");
+			CastSkill("buff_2");
 		});
 
 		punchButton.onClick.AddListener (() => {
-			CreateBuff("buff_0");
+			CastSkill("skill_0");
 		});
 	}
 	
@@ -40,14 +44,21 @@ public class Test : MonoBehaviour {
 		
 	}
 
-	void CreateBuff (string buffKindId) {
-		var buff = BuffFactory.GetInstance().CreateBuff(buffKindId);
-		if (buff.CastTo(view.Character, me)) {
-			var durationBuff = buff as DurationBuffBase;
-			var obj = Instantiate(buffViewPrefab);
-			var objView = obj.GetComponent<DurationBuffView> ();
-			objView.Init(durationBuff);
-			obj.SetParent(buffPanel);
+	void CastSkill (string skillKindId) {
+		var res = me.CastSkill (skillKindId, view.Character);
+		if (res != SKILL_CAST_RESULT.SUCCEED) {
+			CastSkillWarning (res);
 		}
+	}
+
+	void CastSkillWarning (SKILL_CAST_RESULT res) {
+		// TODO
+	}
+
+	void OnNewBuffAppendedOnEnemy (BuffBase buff) {
+		var buffObject = Instantiate (buffViewPrefab);
+		buffObject.SetParent (buffPanel);
+		var buffView = buffObject.GetComponent<BuffView> ();
+		buffView.Init (buff);
 	}
 }

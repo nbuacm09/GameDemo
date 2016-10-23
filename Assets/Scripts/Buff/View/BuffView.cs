@@ -2,12 +2,12 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class DurationBuffView : MonoBehaviour {
+public class BuffView : MonoBehaviour {
 	[SerializeField] Text stackedCountText;
 	[SerializeField] Text timeLeftText;
 	[SerializeField] Text nameText;
-	DurationBuffBase buff;
-	public DurationBuffBase Buff{
+	BuffBase buff;
+	public BuffBase Buff{
 		get{
 			return buff;
 		}
@@ -30,7 +30,7 @@ public class DurationBuffView : MonoBehaviour {
 		}
 	}
 
-	public void Init (DurationBuffBase buff) {
+	public void Init (BuffBase buff) {
 		this.buff = buff;
 		InitUI ();
 		this.buff.onTimeLeftChanged += OnTimeLeftChanged;
@@ -39,7 +39,7 @@ public class DurationBuffView : MonoBehaviour {
 	}
 
 	void InitUI () {
-		nameText.text = buff.BuffConfig.name;
+		nameText.text = buff.SkillConfig.name;
 		SetTimeLeft (buff.TimeLeft);
 		SetStackedCount (buff.StackedCount);
 	}

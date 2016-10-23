@@ -2,64 +2,169 @@
 using System;
 using System.Collections;
 
-public abstract class BuffBase : BaseObject, IEffectable {
-	protected BuffConfigBase buffConfig;
-	public BuffConfigBase BuffConfig {
+public abstract class BuffBase : SkillBase {
+	public BuffConfigBase BuffConfig{
 		get {
-			return buffConfig;
+			return Config as BuffConfigBase;
 		}
 	}
 
-	protected CharacterBase character;
-	protected CharacterBase caster;
+	long latestEffectTime;
+	public long LatestEffectTime {
+		get {
+			return latestEffectTime;
+		}
+	}
+	long effectTimes;
+	public long EffectTimes {
+		get {
+			return effectTimes;
+		}
+	}
+	long passedTime;
+	public long PassedTime{
+		get{
+			return passedTime;
+		}
+	}
+	long timeLeft;
+	public long TimeLeft{
+		get{
+			return timeLeft;
+		}
+	}
+	int stackedCount;
+	public int StackedCount{
+		get{
+			return stackedCount;
+		}
+	}
 
-	public BaseDelegateV<bool> onBuffRemoved;
+	public BaseDelegateV<long> onTimeLeftChanged;
+	public BaseDelegateV<int> onStackedCountChanged;
 
-	public ChangableDouble effectValue = new ChangableDouble();
-	public ChangableInt manaCost = new ChangableInt();
+	public ChangableLong effectInterval = new ChangableLong();
+	public ChangableLong duration = new ChangableLong();
+	public ChangableInt maxStackedCount = new ChangableInt();
 
 	public BuffBase() {
-		
+		latestEffectTime = -1;
+		stackedCount = 1;
+		effectTimes = 0;
+		passedTime = 0;
 	}
 
-	public EFFECT_PROPERTY_TYPE GetEffectProperty () {
-		return buffConfig.effectProperty;
+	public override void InitWithConfig (ConfigBaseObject configObj) {
+		base.InitWithConfig (configObj);
+		var buffConfig = configObj as BuffConfigBase;
+		Debug.Assert (buffConfig != null);
+		var durationBuffConfig = buffConfig as BuffConfigBase;
+		Debug.Assert (durationBuffConfig != null);
+		timeLeft = durationBuffConfig.duration;
+		effectInterval.Set (durationBuffConfig.effectInterval);
+		duration.Set (durationBuffConfig.duration);
+		maxStackedCount.Set (durationBuffConfig.maxStackedCount);
 	}
 
-	public CharacterBase GetCaster() {
-		return caster;
-	}
-
-	public virtual void InitWithConfig (BuffConfigBase buffConfig) {
-		this.buffConfig = buffConfig;
-
-		effectValue.Set (buffConfig.effectValue);
-		manaCost.Set (buffConfig.manaCost);
-	}
-	/// <summary>
-	/// Casts to.
-	/// </summary>
-	/// <returns><c>true</c>, if this buff need a buff view on UI, <c>false</c> otherwise.</returns>
-	/// <param name="character">Character.</param>
-	/// <param name="caster">Caster.</param>
-	public virtual bool CastTo(CharacterBase character, CharacterBase caster) {
+	public override void CastTo(CharacterBase character, CharacterBase caster) {
 		this.character = character;
 		this.caster = caster;
-		OnBuffCasted ();
-		Effective ();
-		OnBuffOver ();
-		return false;
+		OnSkillCasted ();
+		var characterBuff = character.GetBuff (BuffConfig.kindId, caster) as BuffBase;
+		if (characterBuff == null) {
+			character.AddBuff (this, caster);
+			TimeManager.GetInstance ().RegistBaseObject (this);
+			OnBuffPasteOnCharacter ();
+		} else {
+			characterBuff.AddStacked ();
+		}
 	}
 
-	protected virtual void OnBuffCasted () {
+	protected virtual void OnBuffPasteOnCharacter () {
 		
 	}
 
-	protected virtual void Effective () {
+	protected virtual void AddStacked () {
+		if (stackedCount + 1 <= maxStackedCount.Value) {
+			stackedCount++;
+			if (onStackedCountChanged != null) {
+				onStackedCountChanged (stackedCount);
+			}
+		}
 
+		RefreshTimeLeft ();
 	}
 
-	protected virtual void OnBuffOver () {
-		
+	void RefreshTimeLeft () {
+		SetTimeLeft (duration.Value);
+	}
+
+	public override void Update(long deltaTime) {
+		passedTime += deltaTime;
+		AddTimeLeft (-deltaTime);
+
+		if (IsEffectiveByTime ()) {
+			int currentEffectTimes = TryEffect (ref latestEffectTime);
+			if (currentEffectTimes > 0) {
+				effectTimes += currentEffectTimes;
+			}
+		}
+
+		if (CheckBuffOver()) {
+			OnSkillOver ();
+			RemoveBuff (true);
+		}
+	}
+
+	bool IsEffectiveByTime () {
+		return effectInterval.Value > 0;
+	}
+
+	void RemoveBuff (bool timeOver) {
+		character.RemoveBuff (this, caster);
+		TimeManager.GetInstance ().UnregistBaseObject (this);
+		if (onBuffRemoved != null) {
+			onBuffRemoved (timeOver);
+		}
+	}
+
+	public void RemoveBuff () {
+		RemoveBuff (false);
+	}
+
+	protected virtual bool CheckBuffOver () {
+		return timeLeft <= 0;
+	}
+
+	protected virtual int TryEffect(ref long latestEffectTime) {
+		if (latestEffectTime < 0) {
+			latestEffectTime = 0;
+		}
+		int effectTimes = 0;
+
+		Debug.Assert (effectInterval.Value > 0);
+		Debug.Assert ((PassedTime - latestEffectTime) / effectInterval.Value < 100);
+
+		while(latestEffectTime + effectInterval.Value <= PassedTime) {
+			long interval = effectInterval.Value;
+			Effective ();
+			latestEffectTime += interval;
+			effectTimes++;
+		}
+
+		return effectTimes;
+	}
+
+	public long SetTimeLeft(long val) {
+		timeLeft = val;
+		if (onTimeLeftChanged != null) {
+			onTimeLeftChanged (timeLeft);
+		}
+		return timeLeft;
+	}
+
+	public long AddTimeLeft(long val) {
+		SetTimeLeft (timeLeft + val);
+		return timeLeft;
 	}
 }

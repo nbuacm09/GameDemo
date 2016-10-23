@@ -1,0 +1,21 @@
+﻿public enum EFFECT_PROPERTY {
+	NO,
+	FIRE,
+	ICE,
+	LIGHT,
+	DARK
+}
+
+public enum PROPERTY {
+	HP,
+	MP
+}
+
+public enum SKILL_CAST_RESULT {
+	SUCCEED,
+	NOT_ENOUGH_MANA,
+	IN_CD,
+	STUN,
+	SILENCE,
+	DISABLE
+}

@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DurationBuffEnhanceDamage : DurationBuffBase {
+public class BuffEnhanceDamage : BuffBase {
 	protected override void OnBuffPasteOnCharacter () {
 		character.damageProcess += DamageProcess;
 	}
 
-	protected override void OnBuffOver () {
+	protected override void OnSkillOver () {
 		character.damageProcess -= DamageProcess;
 	}
 

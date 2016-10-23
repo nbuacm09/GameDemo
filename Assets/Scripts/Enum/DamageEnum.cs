@@ -1,7 +1,0 @@
-﻿public enum EFFECT_PROPERTY_TYPE {
-	NO,
-	FIRE,
-	ICE,
-	LIGHT,
-	DARK
-}
