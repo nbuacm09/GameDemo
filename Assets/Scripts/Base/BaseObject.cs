@@ -1,24 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class BaseObject
-{
+public abstract class BaseObject {
 	static long idCreator;
 	long id;
-	public long Id
-	{
-		get
-		{
-			return id;
-		}
+	public long GetId () {
+		return id;
 	}
-	public BaseObject()
-	{
+	public BaseObject() {
 		id = idCreator++;
 	}
 
-	public virtual void Update(long delteTime)
-	{
+	public virtual void Update(long deltaTime) {
 		
 	}
 }

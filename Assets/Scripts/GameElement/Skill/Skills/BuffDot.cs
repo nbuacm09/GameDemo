@@ -3,6 +3,6 @@ using System.Collections;
 
 public class BuffDot : BuffBase {
 	protected override void Effective () {
-		character.Damage (effectValue.Value * StackedCount, this);
+		target.Damage (effectValue.Value * StackedCount, this);
 	}
 }

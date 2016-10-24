@@ -13,11 +13,8 @@ public class Test : MonoBehaviour {
 	[SerializeField] GameObject buffPanel;
 	[SerializeField] GameObject buffViewPrefab;
 
-	CharacterBase me;
 	// Use this for initialization
 	void Start () {
-		me = CharacterFactory.GetInstance ().Create ("character_0");
-
 		var enemy = CharacterFactory.GetInstance ().Create ("character_1");
 		enemy.onNewBuffAppended += OnNewBuffAppendedOnEnemy;
 		view.Init (enemy);
@@ -45,7 +42,7 @@ public class Test : MonoBehaviour {
 	}
 
 	void CastSkill (string skillKindId) {
-		var res = me.CastSkill (skillKindId, view.Character);
+		var res = God.GetInstance().CastSkill (skillKindId, view.Character);
 		if (res != SKILL_CAST_RESULT.SUCCEED) {
 			CastSkillWarning (res);
 		}

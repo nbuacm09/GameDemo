@@ -2,16 +2,15 @@
 using System;
 using System.Collections;
 
-public abstract class SkillBase : FactoryObject, IEffectable {
+public abstract class SkillBase : FactoryObject {
 	public SkillConfigBase SkillConfig{
 		get {
 			return Config as SkillConfigBase;
 		}
 	}
-	protected CharacterBase character;
-	protected CharacterBase caster;
 
-	public BaseDelegateV<bool> onBuffRemoved;
+	protected CharacterBase target;
+	protected IAbleToCastSkill caster;
 
 	public ChangableDouble effectValue = new ChangableDouble();
 	public ChangableInt manaCost = new ChangableInt();
@@ -20,14 +19,6 @@ public abstract class SkillBase : FactoryObject, IEffectable {
 
 	public SkillBase() {
 		
-	}
-
-	public EFFECT_PROPERTY GetEffectProperty () {
-		return SkillConfig.effectProperty;
-	}
-
-	public CharacterBase GetCaster() {
-		return caster;
 	}
 
 	public virtual SKILL_CAST_RESULT CheckBeforeCast(CharacterBase caster, CharacterBase target) {
@@ -44,8 +35,8 @@ public abstract class SkillBase : FactoryObject, IEffectable {
 		cdTime.Set (skillConfig.cdTime);
 	}
 
-	public virtual void CastTo(CharacterBase character, CharacterBase caster) {
-		this.character = character;
+	public virtual void CastTo(CharacterBase target, IAbleToCastSkill caster) {
+		this.target = target;
 		this.caster = caster;
 		OnSkillCasted ();
 		Effective ();

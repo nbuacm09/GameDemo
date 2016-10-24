@@ -42,6 +42,7 @@ public abstract class BuffBase : SkillBase {
 
 	public BaseDelegateV<long> onTimeLeftChanged;
 	public BaseDelegateV<int> onStackedCountChanged;
+	public BaseDelegateV<bool> onBuffRemoved;
 
 	public ChangableLong effectInterval = new ChangableLong();
 	public ChangableLong duration = new ChangableLong();
@@ -66,13 +67,13 @@ public abstract class BuffBase : SkillBase {
 		maxStackedCount.Set (durationBuffConfig.maxStackedCount);
 	}
 
-	public override void CastTo(CharacterBase character, CharacterBase caster) {
-		this.character = character;
+	public override void CastTo(CharacterBase target, IAbleToCastSkill caster) {
+		this.target = target;
 		this.caster = caster;
 		OnSkillCasted ();
-		var characterBuff = character.GetBuff (BuffConfig.kindId, caster) as BuffBase;
+		var characterBuff = target.GetBuff (BuffConfig.kindId, caster) as BuffBase;
 		if (characterBuff == null) {
-			character.AddBuff (this, caster);
+			target.AddBuff (this, caster);
 			TimeManager.GetInstance ().RegistBaseObject (this);
 			OnBuffPasteOnCharacter ();
 		} else {
@@ -121,7 +122,7 @@ public abstract class BuffBase : SkillBase {
 	}
 
 	void RemoveBuff (bool timeOver) {
-		character.RemoveBuff (this, caster);
+		target.RemoveBuff (this, caster);
 		TimeManager.GetInstance ().UnregistBaseObject (this);
 		if (onBuffRemoved != null) {
 			onBuffRemoved (timeOver);

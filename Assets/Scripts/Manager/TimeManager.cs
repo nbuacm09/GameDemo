@@ -35,7 +35,7 @@ public class TimeManager : MonoBehaviour
 			var cur = it;
 			it = it.Next;
 			var obj = cur.Value;
-			if (existedObjId.Contains(obj.Id))
+			if (existedObjId.Contains(obj.GetId()))
 			{
 				obj.Update (deltaTime);
 			}
@@ -48,15 +48,15 @@ public class TimeManager : MonoBehaviour
 
 	public void RegistBaseObject(BaseObject obj)
 	{
-		if (existedObjId.Contains(obj.Id)) {
+		if (existedObjId.Contains(obj.GetId())) {
 			return;
 		}
 		timeObjects.AddLast (obj);
-		existedObjId.Add (obj.Id);
+		existedObjId.Add (obj.GetId());
 	}
 
 	public void UnregistBaseObject(BaseObject obj)
 	{
-		existedObjId.Remove (obj.Id);
+		existedObjId.Remove (obj.GetId());
 	}
 }
