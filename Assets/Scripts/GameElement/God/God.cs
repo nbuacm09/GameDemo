@@ -14,6 +14,6 @@ public class God : BaseObject, IAbleToCastSkill {
 
 		skill.CastTo (target, this);
 
-		return SKILL_CAST_RESULT.SUCCEED;
+		return SKILL_CAST_RESULT.SUCCESS;
 	}
 }

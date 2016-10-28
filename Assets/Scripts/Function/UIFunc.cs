@@ -5,7 +5,7 @@ using System.Collections;
 
 public static class UIFunc {
 	public static void SetParent (this GameObject obj, GameObject parent) {
-		obj.transform.SetParent(parent.transform);
+		obj.transform.SetParent(parent.transform, false);
 	}
 
 	public static void SetScaleX(this GameObject obj, float scaleX) {

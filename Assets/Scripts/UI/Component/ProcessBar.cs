@@ -5,6 +5,7 @@ using System.Collections;
 public class ProcessBar : MonoBehaviour {
 	[SerializeField] bool moveAnimation = false;
 	[SerializeField] float moveTime = 0.5f;
+	[SerializeField] GameObject bar;
 
 	float currentProcess;
 	float targetProcess;
@@ -50,7 +51,8 @@ public class ProcessBar : MonoBehaviour {
 
 	void RealSetProcess (float process) {
 		process = MathFunc.Clamp<float> (process, 0, 1);
-		gameObject.SetScaleX (process);
+		GameObject realBar = bar == null ? gameObject : bar;
+		realBar.SetScaleX (process);
 		currentProcess = process;
 	}
 }

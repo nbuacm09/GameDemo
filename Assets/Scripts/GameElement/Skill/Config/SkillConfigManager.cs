@@ -35,6 +35,7 @@ public class SkillConfigManager : Singleton<SkillConfigManager> {
 		buffCfg.maxStackedCount = 3;
 		buffCfg.manaCost = 10;
 		buffCfg.cdTime = 2000;
+		buffCfg.singTime = 1000;
 		skillConfigs.Add (buffCfg.kindId, buffCfg);
 
 		buffCfg = new BuffConfigBase();

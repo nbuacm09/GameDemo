@@ -9,8 +9,19 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
+	protected CharacterBase () {
+		TimeManager.GetInstance ().RegistBaseObject (this);
+	}
+
+	~CharacterBase () {
+		TimeManager.GetInstance ().UnregistBaseObject (this);
+	}
+
+
+
 	public override void Update(long deltaTime) {
 		UpdateSkillCd (deltaTime);
+		UpdateSkillSing (deltaTime);
 	}
 
 	public override void InitWithConfig (ConfigBaseObject configObj) {
@@ -109,11 +120,38 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 	#region skill
 	HashSet<string> skillList = new HashSet<string> ();
+	public HashSet<string> SkillList{
+		get {
+			return skillList;
+		}
+	}
 	Dictionary<string, long> skillCdTimeList = new Dictionary<string, long> ();
 	public DataProcessDelegate<SkillBase> castedSkillProcess;
 	public BaseDelegateV<string> onSkillLearned;
 	public BaseDelegateV<string> onSkillCdOk;
+	protected BaseDelegate onSkillSingOk_inner;
 	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> onSkillCasted;
+	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> beforeSkillCasted;
+
+	bool isSingingSkill;
+	public bool IsSingingSkill {
+		get {
+			return isSingingSkill;
+		}
+	}
+	long skillSingTime;
+	public long SkillSingTime {
+		get {
+			return skillSingTime;
+		}
+	}
+	long skillSingTimeLeft;
+	public long SkillSingTimeLeft {
+		get {
+			return skillSingTimeLeft;
+		}
+	}
+
 	public void LearnSkill (string skillKindId) {
 		skillList.Add (skillKindId);
 		if (onSkillLearned != null) {
@@ -121,21 +159,39 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	public void UpdateSkillCd(long deltaTime) {
+	void UpdateSkillSing (long deltaTime) {
+		if (isSingingSkill) {
+			skillSingTimeLeft -= deltaTime;
+			if (skillSingTimeLeft <= 0) {
+				if (onSkillSingOk_inner != null) {
+					onSkillSingOk_inner ();
+				}
+				isSingingSkill = false;
+			}
+		}
+	}
+
+	void UpdateSkillCd(long deltaTime) {
+		List<string> cdingSkill = new List<string> ();
 		foreach (var skillCdInfo in skillCdTimeList) {
 			if (skillCdInfo.Value <= 0) {
 				continue;
 			}
+			cdingSkill.Add (skillCdInfo.Key);
+		}
 
-			var nextVal = skillCdInfo.Value - deltaTime;
+		for (int i = 0; i < cdingSkill.Count; i++) {
+			string skillKindId = cdingSkill [i];
+			long cdTimeLeft = skillCdTimeList [skillKindId];
+			var nextVal = cdTimeLeft - deltaTime;
 			if (nextVal <= 0) {
 				nextVal = 0;
 			}
 
-			skillCdTimeList [skillCdInfo.Key] = nextVal;
+			skillCdTimeList [skillKindId] = nextVal;
 			if (nextVal == 0) {
 				if (onSkillCdOk != null) {
-					onSkillCdOk (skillCdInfo.Key);
+					onSkillCdOk (skillKindId);
 				}
 			}
 		}
@@ -147,20 +203,24 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
-		#region check if I can cast skill
+	public virtual SKILL_CAST_RESULT CheckSkillCast(string skillKindId, CharacterBase target, out SkillBase skill) {
+		skill = null;
+		if (isSingingSkill) {
+			return SKILL_CAST_RESULT.IS_SINGING;
+		}
+
 		if (SkillIsLearned (skillKindId) == false) {
 			return SKILL_CAST_RESULT.DISABLE;
 		}
 
-		var skill = SkillFactory.GetInstance ().Create (skillKindId);
+		skill = SkillFactory.GetInstance ().Create (skillKindId);
 		if (castedSkillProcess != null) {
 			castedSkillProcess (ref skill);
 		}
 
 		// special check by different buff.
 		var buffCheckResult = skill.CheckBeforeCast (this, target);
-		if (buffCheckResult != SKILL_CAST_RESULT.SUCCEED) {
+		if (buffCheckResult != SKILL_CAST_RESULT.SUCCESS) {
 			return buffCheckResult;
 		}
 
@@ -171,8 +231,40 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		if (GetSkillCd (skillKindId) > 0) {
 			return SKILL_CAST_RESULT.IN_CD;
 		}
-		#endregion
 
+		return SKILL_CAST_RESULT.SUCCESS;
+	}
+
+	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
+		SkillBase skill;
+		var castCheckResult = CheckSkillCast(skillKindId, target, out skill);
+		if (castCheckResult != SKILL_CAST_RESULT.SUCCESS) {
+			return castCheckResult;
+		}
+
+		if (beforeSkillCasted != null) {
+			beforeSkillCasted (this, target, skill);
+		}
+
+		SingSkill (skill, target);
+
+		return SKILL_CAST_RESULT.SUCCESS;
+	}
+
+	protected virtual void SingSkill (SkillBase skill, CharacterBase target) {
+		if (skill.singTime.Value == 0) {
+			CastSkillAfterSinging(skill, target);	
+		} else {
+			isSingingSkill = true;
+			skillSingTime = skill.singTime.Value;
+			skillSingTimeLeft = skill.singTime.Value;
+			onSkillSingOk_inner = () => {
+				CastSkillAfterSinging(skill, target);	
+			};
+		}
+	}
+
+	protected void CastSkillAfterSinging(SkillBase skill, CharacterBase target) {
 		#region skill cost
 		// mana cost
 		AddProperty(PROPERTY.MP, -skill.manaCost.Value);
@@ -187,8 +279,6 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 
 		skill.CastTo (target, this);
-
-		return SKILL_CAST_RESULT.SUCCEED;
 	}
 
 	public bool SkillIsLearned (string skillKindId) {
@@ -248,6 +338,26 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 			if (list.Count == 0) {
 				buffList.Remove (caster.GetId());
 			}
+		}
+	}
+	#endregion
+
+	#region target
+	CharacterBase target;
+	public CharacterBase Target {
+		get {
+			return target;
+		}
+	}
+	public BaseDelegateV<CharacterBase, CharacterBase> onTargetSwitched;
+	public void SelectTarget(CharacterBase newTarget) {
+		if (target == newTarget) {
+			return;
+		}
+		CharacterBase oriTarget = target;
+		target = newTarget;
+		if (onTargetSwitched != null) {
+			onTargetSwitched (oriTarget, newTarget);
 		}
 	}
 	#endregion

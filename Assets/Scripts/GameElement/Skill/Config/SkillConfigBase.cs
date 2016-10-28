@@ -6,4 +6,5 @@ public class SkillConfigBase : ConfigBaseObject {
 	public int effectValue;
 	public int manaCost;
 	public long cdTime;
+	public long singTime;
 }
