@@ -10,7 +10,17 @@ public abstract class SkillBase : FactoryObject {
 	}
 
 	protected CharacterBase target;
+	public CharacterBase Target {
+		get {
+			return target;
+		}
+	}
 	protected IAbleToCastSkill caster;
+	public IAbleToCastSkill Caster {
+		get {
+			return caster;
+		}
+	}
 
 	public ChangableDouble effectValue = new ChangableDouble();
 	public ChangableInt manaCost = new ChangableInt();
@@ -43,6 +53,7 @@ public abstract class SkillBase : FactoryObject {
 
 		OnSkillCasted ();
 		Effective ();
+		Destroy ();
 		OnSkillOver ();
 	}
 

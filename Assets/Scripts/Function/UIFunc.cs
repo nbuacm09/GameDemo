@@ -8,6 +8,13 @@ public static class UIFunc {
 		obj.transform.SetParent(parent.transform, false);
 	}
 
+	public static void ClearChildren (this GameObject obj) {
+		for (int i = obj.transform.childCount - 1; i >= 0; i--) {
+			GameObject.Destroy (obj.transform.GetChild (i).gameObject);
+		}
+
+	}
+
 	public static void SetScaleX(this GameObject obj, float scaleX) {
 		var scale = obj.transform.localScale;
 		scale.x = scaleX;

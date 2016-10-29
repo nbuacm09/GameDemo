@@ -10,14 +10,14 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	protected CharacterBase () {
-		TimeManager.GetInstance ().RegistBaseObject (this);
+		TimeManager.RegistBaseObject (this);
 	}
 
 	~CharacterBase () {
-		TimeManager.GetInstance ().UnregistBaseObject (this);
+		TimeManager.UnregistBaseObject (this);
 	}
 
-
+	bool isDead;
 
 	public override void Update(long deltaTime) {
 		UpdateSkillCd (deltaTime);
@@ -31,6 +31,12 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 		InitProperty (characterConfig);
 		InitLearnedSkill (characterConfig);
+	}
+
+	protected override void UnregisterAllDelegates () {
+		if (target != null) {
+			target.onDead -= OnTargetDead;
+		}
 	}
 
 	#region property
@@ -205,8 +211,13 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	public virtual SKILL_CAST_RESULT CheckSkillCast(string skillKindId, CharacterBase target, out SkillBase skill) {
+	public virtual SKILL_CAST_RESULT CreateSkill(string skillKindId, CharacterBase target, out SkillBase skill) {
 		skill = null;
+
+		if (target.isDead) {
+			return SKILL_CAST_RESULT.TARGET_IS_DEAD;
+		}
+
 		if (isSingingSkill) {
 			return SKILL_CAST_RESULT.IS_SINGING;
 		}
@@ -239,9 +250,9 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
 		SkillBase skill;
-		var castCheckResult = CheckSkillCast(skillKindId, target, out skill);
-		if (castCheckResult != SKILL_CAST_RESULT.SUCCESS) {
-			return castCheckResult;
+		var skillCreateResult = CreateSkill(skillKindId, target, out skill);
+		if (skillCreateResult != SKILL_CAST_RESULT.SUCCESS) {
+			return skillCreateResult;
 		}
 
 		if (beforeSkillCasted != null) {
@@ -317,46 +328,31 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	#endregion
 
 	#region buff on body
-	Dictionary<long, Dictionary<string, SkillBase>> buffList = new Dictionary<long, Dictionary<string, SkillBase>> ();
+	List<BuffBase> buffList = new List<BuffBase> ();
 	public BaseDelegateV<BuffBase> onNewBuffAppended;
-	public SkillBase GetBuff (string buffKindId, IAbleToCastSkill caster) {
-		if (buffList.ContainsKey(caster.GetId()) == false) {
-			return null;
-		}
 
-		var list = buffList [caster.GetId()];
-		if (list.ContainsKey(buffKindId) == false) {
-			return null;
-		}
-
-		return list [buffKindId];
+	public List<BuffBase> GetBuffList() {
+		return buffList;
 	}
 
-	Dictionary<string, SkillBase> GetBuffList(long casterId) {
-		if (buffList.ContainsKey(casterId) == false) {
-			buffList.Add (casterId, new Dictionary<string, SkillBase> ());
+	public BuffBase GetBuff (string buffKindId, IAbleToCastSkill caster) {
+		foreach(var buff in buffList) {
+			if (buff.Config.kindId == buffKindId && buff.Caster == caster) {
+				return buff;
+			}
 		}
-		return buffList [casterId];
+		return null;
 	}
 
-	public void AddBuff(BuffBase buff, IAbleToCastSkill caster) {
-		GetBuffList (caster.GetId()).Add (buff.SkillConfig.kindId, buff);
+	public void AddBuff(BuffBase buff) {
+		buffList.Add (buff);
 		if (onNewBuffAppended != null) {
 			onNewBuffAppended (buff);
 		}
 	}
 
-	public void RemoveBuff(SkillBase buff, IAbleToCastSkill caster) {
-		if (buffList.ContainsKey(caster.GetId()) == false) {
-			return;
-		}
-		var list = buffList [caster.GetId()];
-		if (list.ContainsKey(buff.SkillConfig.kindId)) {
-			list.Remove (buff.SkillConfig.kindId);
-			if (list.Count == 0) {
-				buffList.Remove (caster.GetId());
-			}
-		}
+	public void RemoveBuff(BuffBase buff) {
+		buffList.Remove (buff);
 	}
 	#endregion
 
@@ -368,12 +364,25 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 	public BaseDelegateV<CharacterBase, CharacterBase> onTargetSwitched;
+	void OnTargetDead (SkillBase skill) {
+		SelectTarget (null);
+	}
 	public void SelectTarget(CharacterBase newTarget) {
 		if (target == newTarget) {
 			return;
 		}
+
+		if (target != null) {
+			target.onDead -= OnTargetDead;
+		}
+
 		CharacterBase oriTarget = target;
 		target = newTarget;
+
+		if (newTarget != null) {
+			newTarget.onDead += OnTargetDead;
+		}
+
 		if (onTargetSwitched != null) {
 			onTargetSwitched (oriTarget, newTarget);
 		}
@@ -383,6 +392,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	#region damage
 	public DataProcessDelegate<double> damageProcess;
 	public BaseDelegateV<int, SkillBase> onDamaged;
+	public BaseDelegateV<SkillBase> onDead;
 
 	public void Damage(double damageValue, SkillBase skill) {
 		if (damageProcess != null) {
@@ -393,6 +403,20 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		if (onDamaged != null) {
 			onDamaged (realDamage, skill);
 		}
+
+		if (GetProperty(PROPERTY.HP) <= 0) {
+			SetProperty (PROPERTY.HP, 0);
+			Die (skill);
+		}
+	}
+
+	protected virtual void Die (SkillBase skill) {
+		isDead = true;
+
+		if (onDead != null) {
+			onDead (skill);
+		}
+		Destroy ();
 	}
 	#endregion
 }

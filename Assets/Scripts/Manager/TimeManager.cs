@@ -8,8 +8,7 @@ public class TimeManager : MonoBehaviour
 	static TimeManager instance = null;
 	float duration = 0;
 	long lastUpdateTime = 0;
-	LinkedList<BaseObject> timeObjects = new LinkedList<BaseObject> ();
-	HashSet<long> existedObjId = new HashSet<long> ();
+	static Dictionary<long, WeakReference> timeObjects = new Dictionary<long, WeakReference> ();
 
 	static public TimeManager GetInstance()
 	{
@@ -29,34 +28,30 @@ public class TimeManager : MonoBehaviour
 		long deltaTime = curTime - lastUpdateTime;
 		lastUpdateTime = curTime;
 
-		var it = timeObjects.First;
-		while (it != null)
-		{
-			var cur = it;
-			it = it.Next;
-			var obj = cur.Value;
-			if (existedObjId.Contains(obj.GetId()))
-			{
-				obj.Update (deltaTime);
+		List<WeakReference> objs = new List<WeakReference> ();
+		foreach (var obj in timeObjects) {
+			objs.Add (obj.Value);
+		}
+
+		for (int i = 0; i < objs.Count; i++) {
+			if (objs[i].IsAlive == false) {
+				continue;
 			}
-			else
-			{
-				timeObjects.Remove (cur);
+			BaseObject obj = objs [i].Target as BaseObject;
+			if (timeObjects.ContainsKey(obj.GetId()) == false) {
+				continue;
 			}
+			obj.Update (deltaTime);
 		}
 	}
 
-	public void RegistBaseObject(BaseObject obj)
+	public static void RegistBaseObject(BaseObject obj)
 	{
-		if (existedObjId.Contains(obj.GetId())) {
-			return;
-		}
-		timeObjects.AddLast (obj);
-		existedObjId.Add (obj.GetId());
+		timeObjects[obj.GetId()] = new WeakReference(obj);
 	}
 
-	public void UnregistBaseObject(BaseObject obj)
+	public static void UnregistBaseObject(BaseObject obj)
 	{
-		existedObjId.Remove (obj.GetId());
+		timeObjects.Remove (obj.GetId());
 	}
 }

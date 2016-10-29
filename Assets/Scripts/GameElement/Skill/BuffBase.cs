@@ -73,15 +73,20 @@ public abstract class BuffBase : SkillBase {
 		OnSkillCasted ();
 		var characterBuff = target.GetBuff (BuffConfig.kindId, caster) as BuffBase;
 		if (characterBuff == null) {
-			target.AddBuff (this, caster);
-			TimeManager.GetInstance ().RegistBaseObject (this);
-			OnBuffPasteOnCharacter ();
+			target.AddBuff (this);
+			target.onDead += OnCharacterDead;
+			TimeManager.RegistBaseObject (this);
+			OnBuffPastedOnCharacter ();
 		} else {
 			characterBuff.AddStacked ();
 		}
 	}
 
-	protected virtual void OnBuffPasteOnCharacter () {
+	void OnCharacterDead (SkillBase skill) {
+		Remove ();
+	}
+
+	protected virtual void OnBuffPastedOnCharacter () {
 		
 	}
 
@@ -97,6 +102,7 @@ public abstract class BuffBase : SkillBase {
 	}
 
 	void RefreshTimeLeft () {
+		passedTime = 0;
 		SetTimeLeft (duration.Value);
 	}
 
@@ -112,8 +118,8 @@ public abstract class BuffBase : SkillBase {
 		}
 
 		if (CheckBuffOver()) {
+			Remove (true);
 			OnSkillOver ();
-			RemoveBuff (true);
 		}
 	}
 
@@ -121,16 +127,17 @@ public abstract class BuffBase : SkillBase {
 		return effectInterval.Value > 0;
 	}
 
-	void RemoveBuff (bool timeOver) {
-		target.RemoveBuff (this, caster);
-		TimeManager.GetInstance ().UnregistBaseObject (this);
+	void Remove (bool timeOver) {
+		target.RemoveBuff (this);
+		TimeManager.UnregistBaseObject (this);
 		if (onBuffRemoved != null) {
 			onBuffRemoved (timeOver);
 		}
+		Destroy ();
 	}
 
-	public void RemoveBuff () {
-		RemoveBuff (false);
+	public void Remove () {
+		Remove (false);
 	}
 
 	protected virtual bool CheckBuffOver () {

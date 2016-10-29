@@ -3,9 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class BuffView : MonoBehaviour {
+	[SerializeField] Image icon;
+	[SerializeField] Image mask;
 	[SerializeField] Text stackedCountText;
-	[SerializeField] Text timeLeftText;
-	[SerializeField] Text nameText;
 	BuffBase buff;
 	public BuffBase Buff{
 		get{
@@ -19,12 +19,15 @@ public class BuffView : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+		if (buff == null) {
+			return;
+		}
+
+		SetTimeLeftPercent ((float)buff.PassedTime / (buff.TimeLeft + buff.PassedTime));
 	}
 
 	protected virtual void OnDestroy () {
 		if (buff != null) {
-			this.buff.onTimeLeftChanged -= OnTimeLeftChanged;
 			this.buff.onStackedCountChanged -= OnStackedCountChanged;
 			this.buff.onBuffRemoved -= OnBuffRemoved;
 		}
@@ -33,19 +36,12 @@ public class BuffView : MonoBehaviour {
 	public void Init (BuffBase buff) {
 		this.buff = buff;
 		InitUI ();
-		this.buff.onTimeLeftChanged += OnTimeLeftChanged;
 		this.buff.onStackedCountChanged += OnStackedCountChanged;
 		this.buff.onBuffRemoved += OnBuffRemoved;
 	}
 
 	void InitUI () {
-		nameText.text = buff.SkillConfig.name;
-		SetTimeLeft (buff.TimeLeft);
 		SetStackedCount (buff.StackedCount);
-	}
-
-	void OnTimeLeftChanged (long timeLeft) {
-		SetTimeLeft (timeLeft);
 	}
 
 	void OnStackedCountChanged (int stackedCount) {
@@ -56,10 +52,9 @@ public class BuffView : MonoBehaviour {
 		Destroy (gameObject);
 	}
 
-	void SetTimeLeft (long timeLeft) {
-		timeLeftText.text = StringFunc.GetTimeStringMinLength (timeLeft);
+	void SetTimeLeftPercent (float percent) {
+		mask.fillAmount = percent;
 	}
-
 
 	void SetStackedCount (int stackedCount) {
 		stackedCountText.text = stackedCount.ToString();

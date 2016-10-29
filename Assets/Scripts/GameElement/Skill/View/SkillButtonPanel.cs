@@ -5,9 +5,11 @@ using System.Collections;
 public class SkillButtonPanel : CharacterInfoUIBase {
 	[SerializeField] GameObject skillButtonPrefab;
 
-	public override void Init (CharacterBase character) {
-		base.Init (character);
-		// init skill
+	protected override void ClearOriginalCharacterInfo () {
+		gameObject.ClearChildren ();
+	}
+
+	protected override void SetNewCharacterInfo () {
 		foreach (string skillKindId in character.SkillList)
 		{
 			string curSkillKindId = skillKindId;
@@ -20,7 +22,6 @@ public class SkillButtonPanel : CharacterInfoUIBase {
 				CastSkill(curSkillKindId);
 			});
 		}
-
 	}
 
 	void CastSkill (string skillKindId) {
@@ -47,5 +48,6 @@ public class SkillButtonPanel : CharacterInfoUIBase {
 
 	void CastSkillWarning (SKILL_CAST_RESULT res) {
 		// TODO
+		Debug.Log(res);
 	}
 }

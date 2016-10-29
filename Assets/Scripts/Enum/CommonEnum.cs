@@ -19,5 +19,16 @@ public enum SKILL_CAST_RESULT {
 	STUN,
 	SILENCE,
 	IS_SINGING,
-	DISABLE
+	DISABLE,
+	TARGET_IS_DEAD
+}
+
+public enum BATTLE_GROUP {
+	ENEMY,
+	PLAYER
+}
+
+public enum BATTLE_JOB {
+	BOSS,
+	FOLLOWER
 }

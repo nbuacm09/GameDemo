@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class ProcessBar : MonoBehaviour {
+public class ProcessBar : MonoBehaviour, IProcessable {
 	[SerializeField] bool moveAnimation = false;
 	[SerializeField] float moveTime = 0.5f;
 	[SerializeField] GameObject bar;
@@ -31,22 +31,22 @@ public class ProcessBar : MonoBehaviour {
 	}
 
 	public void InitProcess(float process) {
-		ForceSetPercent (process);
+		SetProcess (process, true);
 	}
 
-	public void SetProcess (float process) {
-		if (moveAnimation) {
-			targetProcess = process;
-			moveSpeed = (targetProcess - currentProcess) / moveTime;
-			moving = true;
-		} else {
+	public void SetProcess (float process, bool force = false) {
+		if (force) {
+			moving = false;
 			RealSetProcess (process);
+		} else {
+			if (moveAnimation) {
+				targetProcess = process;
+				moveSpeed = (targetProcess - currentProcess) / moveTime;
+				moving = true;
+			} else {
+				RealSetProcess (process);
+			}
 		}
-	}
-
-	void ForceSetPercent (float process) {
-		moving = false;
-		RealSetProcess (process);
 	}
 
 	void RealSetProcess (float process) {

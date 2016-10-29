@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class BuffEnhanceDamage : BuffBase {
-	protected override void OnBuffPasteOnCharacter () {
+	protected override void OnBuffPastedOnCharacter () {
 		target.damageProcess += DamageProcess;
 	}
 

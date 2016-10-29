@@ -7,11 +7,25 @@ public abstract class BaseObject {
 	public long GetId () {
 		return id;
 	}
+
+	public BaseDelegate onDestroy;
+
 	public BaseObject() {
 		id = idCreator++;
 	}
 
 	public virtual void Update(long deltaTime) {
+		
+	}
+
+	protected virtual void Destroy () {
+		UnregisterAllDelegates ();
+		if (onDestroy != null) {
+			onDestroy ();
+		}
+	}
+
+	protected virtual void UnregisterAllDelegates () {
 		
 	}
 }

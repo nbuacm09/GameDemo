@@ -8,15 +8,20 @@ public enum ChangeType {
 	ADD
 };
 
-public struct ChangeMethod {
-	public WeakReference refObj;
+public class ChangeMethod {
+	public bool available;
 	public ChangeType type;
 	public double changedVal;
 
-	public ChangeMethod (ChangeType type, double changedVal, object refObj = null) {
+	public ChangeMethod (ChangeType type, double changedVal, BaseObject obj = null) {
 		this.type = type;
 		this.changedVal = changedVal;
-		this.refObj = refObj == null ? null : new WeakReference(refObj);
+		available = true;
+		if (obj != null) {
+			obj.onDestroy += () => {
+				available = false;
+			};
+		}
 	}
 
 	public void Operate(ref double val) {
@@ -86,7 +91,7 @@ public abstract class ChangableValue<T> {
 					var cur = it;
 					it = it.Next;
 					var method = cur.Value;
-					if (method.refObj != null && method.refObj.IsAlive == false) {
+					if (method.available == false) {
 						changes.Remove (cur);
 					} else {
 						method.Operate (ref ret);
