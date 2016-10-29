@@ -125,6 +125,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 			return skillList;
 		}
 	}
+	Dictionary<string, long> skillCdTimeLeftList = new Dictionary<string, long> ();
 	Dictionary<string, long> skillCdTimeList = new Dictionary<string, long> ();
 	public DataProcessDelegate<SkillBase> castedSkillProcess;
 	public BaseDelegateV<string> onSkillLearned;
@@ -173,7 +174,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 	void UpdateSkillCd(long deltaTime) {
 		List<string> cdingSkill = new List<string> ();
-		foreach (var skillCdInfo in skillCdTimeList) {
+		foreach (var skillCdInfo in skillCdTimeLeftList) {
 			if (skillCdInfo.Value <= 0) {
 				continue;
 			}
@@ -182,14 +183,15 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 		for (int i = 0; i < cdingSkill.Count; i++) {
 			string skillKindId = cdingSkill [i];
-			long cdTimeLeft = skillCdTimeList [skillKindId];
+			long cdTimeLeft = skillCdTimeLeftList [skillKindId];
 			var nextVal = cdTimeLeft - deltaTime;
 			if (nextVal <= 0) {
 				nextVal = 0;
 			}
 
-			skillCdTimeList [skillKindId] = nextVal;
+			skillCdTimeLeftList [skillKindId] = nextVal;
 			if (nextVal == 0) {
+				skillCdTimeList [skillKindId] = 0;
 				if (onSkillCdOk != null) {
 					onSkillCdOk (skillKindId);
 				}
@@ -228,7 +230,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 			return SKILL_CAST_RESULT.NOT_ENOUGH_MANA;
 		}
 
-		if (GetSkillCd (skillKindId) > 0) {
+		if (GetSkillCdTimeLeft (skillKindId) > 0) {
 			return SKILL_CAST_RESULT.IN_CD;
 		}
 
@@ -264,15 +266,20 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
+	void AddGcd () {
+		foreach (var skillKindId in skillList) {
+			SetSkillCd (skillKindId, 1000);
+		}
+	}
+
 	protected void CastSkillAfterSinging(SkillBase skill, CharacterBase target) {
-		#region skill cost
 		// mana cost
 		AddProperty(PROPERTY.MP, -skill.manaCost.Value);
 
 		// cd
 		SetSkillCd(skill.Config.kindId, skill.cdTime.Value);
 
-		#endregion
+		AddGcd ();
 
 		if (onSkillCasted != null) {
 			onSkillCasted (this, target, skill);
@@ -286,10 +293,21 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	void SetSkillCd (string skillKindId, long cdTime) {
-		skillCdTimeList [skillKindId] = cdTime;
+		if (GetSkillCdTimeLeft(skillKindId) < cdTime) {
+			skillCdTimeList [skillKindId] = cdTime;
+			skillCdTimeLeftList [skillKindId] = cdTime;
+		}
 	}
 
-	public long GetSkillCd (string skillKindId) {
+	public long GetSkillCdTimeLeft (string skillKindId) {
+		if (skillCdTimeLeftList.ContainsKey(skillKindId)) {
+			return skillCdTimeLeftList [skillKindId];
+		} else {
+			return 0;
+		}
+	}
+
+	public long GetSkillCdTime (string skillKindId) {
 		if (skillCdTimeList.ContainsKey(skillKindId)) {
 			return skillCdTimeList [skillKindId];
 		} else {

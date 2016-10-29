@@ -23,6 +23,9 @@ public class SkillFactory : FactoryBase<SkillFactory, SkillBase> {
 		case "buff_2":
 			ret = new BuffBombAfterHealth ();
 			break;
+		case "buff_3":
+			ret = new BuffDot ();
+			break;
 		}
 		return ret;
 	}

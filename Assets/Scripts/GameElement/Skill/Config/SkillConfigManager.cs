@@ -60,6 +60,18 @@ public class SkillConfigManager : Singleton<SkillConfigManager> {
 		buffCfg.cdTime = 4000;
 		skillConfigs.Add (buffCfg.kindId, buffCfg);
 
+		buffCfg = new BuffConfigBase();
+		buffCfg.kindId = "buff_3";
+		buffCfg.name = "health";
+		buffCfg.duration = 20000;
+		buffCfg.effectInterval = 3000;
+		buffCfg.effectValue = -10;
+		buffCfg.maxStackedCount = 1;
+		buffCfg.manaCost = 10;
+		buffCfg.cdTime = 0;
+		buffCfg.isBenefit = true;
+		skillConfigs.Add (buffCfg.kindId, buffCfg);
+
 	}
 
 	public SkillConfigBase GetSkillConfig (string kindId) {

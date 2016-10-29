@@ -24,11 +24,21 @@ public class SkillButtonPanel : CharacterInfoUIBase {
 	}
 
 	void CastSkill (string skillKindId) {
-		if (character.Target == null) {
+		var skillConfig = SkillConfigManager.GetInstance ().GetSkillConfig (skillKindId);
+		CharacterBase target;
+		if (skillConfig.isBenefit) {
+			target = character;
+		} else {
+			target = character.Target;
+		}
+
+		if (target == null) {
 			CastSkillWarning (SKILL_CAST_RESULT.NO_TARGET);
 			return;
 		}
-		var res = character.CastSkill (skillKindId, character.Target);
+
+
+		var res = character.CastSkill (skillKindId, target);
 		//		var res = God.GetInstance().CastSkill (skillKindId, view.Character);
 		if (res != SKILL_CAST_RESULT.SUCCESS) {
 			CastSkillWarning (res);

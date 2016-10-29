@@ -7,4 +7,5 @@ public class SkillConfigBase : ConfigBaseObject {
 	public int manaCost;
 	public long cdTime;
 	public long singTime;
+	public bool isBenefit;
 }

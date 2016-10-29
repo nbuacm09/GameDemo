@@ -24,6 +24,7 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.mp = 100;
 		characterCfg.skillKindIdList.Add ("skill_0");
 		characterCfg.skillKindIdList.Add ("buff_0");
+		characterCfg.skillKindIdList.Add ("buff_3");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 
 		characterCfg = new CharacterConfigBase ();
