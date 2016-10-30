@@ -21,4 +21,8 @@ public static class DataFunc {
 		}
 		return (T)retval;
 	}
+
+	public static object CreateObject(string className) {
+		return Activator.CreateInstance (Type.GetType(className));
+	}
 }

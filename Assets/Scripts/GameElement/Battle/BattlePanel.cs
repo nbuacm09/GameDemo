@@ -6,10 +6,8 @@ using System.Collections.Generic;
 public class BattlePanel : MonoBehaviour {
 	[SerializeField] GameObject followerViewPrefab;
 	[SerializeField] GameObject bossViewPrefab;
-	[SerializeField] GameObject playerViewContainer;
-	[SerializeField] GameObject enemyBossViewContainer;
-	[SerializeField] GameObject playerFollowersViewContainer;
-	[SerializeField] GameObject enemyFollowersViewContainer;
+	[SerializeField] GameObject[] bossContainer;
+	[SerializeField] GameObject[] followersContainer;
 
 	Battle battle;
 	public Battle BattleInfo {
@@ -23,21 +21,22 @@ public class BattlePanel : MonoBehaviour {
 	}
 
 	void InitUI () {
-		// player
-		AddCharacter (bossViewPrefab, playerViewContainer, battle.GetPlayer ());
+		var battleGroups = battle.GetBattleGroups ();
+		for (int i = 0; i < battleGroups.Count; i++) {
+			int currentI = i;
+			AddCharacter (bossViewPrefab, bossContainer [i], battleGroups [i].Boss);
+			foreach (var follower in battleGroups[i].GetFollowers()) {
+				AddCharacter (followerViewPrefab, followersContainer [i], follower);
+			}
 
-		foreach (var follower in battle.GetFollowers(BATTLE_GROUP.PLAYER)) {
-			AddCharacter (followerViewPrefab, playerFollowersViewContainer, follower);
+			battleGroups [i].onFollowerAdded += (CharacterBase follower) => {
+				OnFollowerAdded (currentI, follower);
+			};
 		}
+	}
 
-		// enemy
-		AddCharacter (bossViewPrefab, enemyBossViewContainer, battle.GetEnemyBoss ());
-
-		foreach (var follower in battle.GetFollowers(BATTLE_GROUP.PLAYER)) {
-			
-
-			AddCharacter (followerViewPrefab, enemyFollowersViewContainer, follower);
-		}
+	void OnFollowerAdded(int groupId, CharacterBase follower) {
+		AddCharacter (followerViewPrefab, followersContainer [groupId], follower);
 	}
 
 	void AddCharacter (GameObject prefab, GameObject container, CharacterBase character) {

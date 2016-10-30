@@ -14,7 +14,7 @@ public class GameManager : Singleton<GameManager> {
 	}
 
 	public void NewGame () {
-		PlayerManager.GetInstance ().Init ("character_0");
+		PlayerManager.GetInstance ().Init ("character_Warrior_0");
 		currentBattle = new Battle ();
 		currentBattle.RandomInit ();
 		currentBattle.onGameEnd += OnGameEnd;
@@ -22,8 +22,7 @@ public class GameManager : Singleton<GameManager> {
 
 	void OnGameEnd (bool win) {
 		currentBattle.onGameEnd -= OnGameEnd;
-		currentBattle.GetResult ();
-
+		currentBattle = null;
 		SceneManager.LoadScene ("Entry");
 	}
 }

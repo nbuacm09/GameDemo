@@ -14,8 +14,6 @@ public abstract class FactoryBase<T, U> : Singleton<T> where U : FactoryObject w
 			obj.InitWithConfig (config);
 		}
 
-		Debug.Log ("Factory create an object succeed : ID = " + kindId + ", type = " + obj);
-
 		return obj;
 	}
 

@@ -4,12 +4,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class MainUI : MonoBehaviour {
-	[SerializeField] BattlePanel battlePanel;
-
+public class Test : MonoBehaviour {
+	[SerializeField] Button btn;
 	// Use this for initialization
 	void Start () {
-		var battle = GameManager.GetInstance ().CurrentBattle;
-		battlePanel.Init (battle);
+
+	}
+
+	// Update is called once per frame
+	void Update () {
+	
 	}
 }

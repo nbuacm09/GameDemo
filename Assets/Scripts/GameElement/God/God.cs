@@ -9,7 +9,7 @@ public class God : BaseObject, IAbleToCastSkill {
 		}
 		return instance;
 	}
-	public SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
+	public SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target = null) {
 		var skill = SkillFactory.GetInstance ().Create (skillKindId);
 
 		skill.CastTo (target, this);

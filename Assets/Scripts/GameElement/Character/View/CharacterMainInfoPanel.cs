@@ -25,7 +25,7 @@ public class CharacterMainInfoPanel : CharacterInfoUIBase {
 		meView.Init (character);
 		character.onTargetSwitched += OnTargetSwitched;
 
-		SetTarget (character.Target);
+		SetTarget (character.SelectedTarget);
 	}
 
 	void OnTargetSwitched (CharacterBase oriTarget, CharacterBase newTarget) {

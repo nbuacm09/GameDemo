@@ -7,7 +7,7 @@ public class CharacterBattleView : CharacterInfoUIBase {
 	}
 
 	protected override void SetNewCharacterInfo () {
-		character.onDead -= OnDead;
+		character.onDead += OnDead;
 	}
 
 	void OnDead (SkillBase skill) {

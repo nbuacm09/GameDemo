@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TestMonster : CharacterBase {
+public class Monster : CharacterBase {
 
 }

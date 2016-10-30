@@ -18,8 +18,13 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	bool isDead;
+	public bool IsDead {
+		get {
+			return isDead;
+		}
+	}
 
-	public override void Update(long deltaTime) {
+	protected override void Update(long deltaTime) {
 		UpdateSkillCd (deltaTime);
 		UpdateSkillSing (deltaTime);
 	}
@@ -34,8 +39,8 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	protected override void UnregisterAllDelegates () {
-		if (target != null) {
-			target.onDead -= OnTargetDead;
+		if (selectedTarget != null) {
+			selectedTarget.onDead -= OnTargetDead;
 		}
 	}
 
@@ -136,7 +141,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	public DataProcessDelegate<SkillBase> castedSkillProcess;
 	public BaseDelegateV<string> onSkillLearned;
 	public BaseDelegateV<string> onSkillCdOk;
-	protected BaseDelegate onSkillSingOk_inner;
+	protected BaseDelegate onSkillSingOkClosure;
 	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> onSkillCasted;
 	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> beforeSkillCasted;
 
@@ -166,12 +171,22 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
+	void CancelSinging () {
+		isSingingSkill = false;
+		onSkillSingOkClosure = null;
+	}
+
 	void UpdateSkillSing (long deltaTime) {
+		if (IsDead) {
+			CancelSinging ();
+			return;
+		}
 		if (isSingingSkill) {
 			skillSingTimeLeft -= deltaTime;
 			if (skillSingTimeLeft <= 0) {
-				if (onSkillSingOk_inner != null) {
-					onSkillSingOk_inner ();
+				if (onSkillSingOkClosure != null) {
+					onSkillSingOkClosure ();
+					onSkillSingOkClosure = null;
 				}
 				isSingingSkill = false;
 			}
@@ -211,12 +226,11 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	public virtual SKILL_CAST_RESULT CreateSkill(string skillKindId, CharacterBase target, out SkillBase skill) {
-		skill = null;
-
-		if (target.isDead) {
-			return SKILL_CAST_RESULT.TARGET_IS_DEAD;
+	public virtual SKILL_CAST_RESULT CreateSkill(string skillKindId, ref CharacterBase target, out SkillBase skill) {
+		if (target == null) {
+			target = SelectedTarget;
 		}
+		skill = null;
 
 		if (isSingingSkill) {
 			return SKILL_CAST_RESULT.IS_SINGING;
@@ -225,6 +239,35 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		if (SkillIsLearned (skillKindId) == false) {
 			return SKILL_CAST_RESULT.DISABLE;
 		}
+
+		if (GetSkillCdTimeLeft (skillKindId) > 0) {
+			return SKILL_CAST_RESULT.IN_CD;
+		}
+
+		#region get real target
+		var skillConfig = SkillConfigManager.GetInstance ().GetSkillConfig (skillKindId);
+		if (skillConfig.NeedTarget) {
+			if (skillConfig.IsBenefit) {
+				if (target == null || target.IsDead || GameManager.GetInstance().CurrentBattle.SameTeam(this, target) == false) {
+					target = this;
+				} else {
+					// do nothing
+					// target = target;
+				}
+			} else {
+				if (SelectedTarget == null) {
+					return SKILL_CAST_RESULT.NO_TARGET;
+				} else if (SelectedTarget.IsDead) {
+					return SKILL_CAST_RESULT.TARGET_IS_DEAD;
+				} else {
+					// do nothing
+					// target = target;
+				}
+			}
+		} else {
+			target = null;
+		}
+		#endregion
 
 		skill = SkillFactory.GetInstance ().Create (skillKindId);
 		if (castedSkillProcess != null) {
@@ -237,20 +280,16 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 			return buffCheckResult;
 		}
 
-		if (skill.manaCost.Value > Mp) {
+		if (skill.ManaCost > Mp) {
 			return SKILL_CAST_RESULT.NOT_ENOUGH_MANA;
-		}
-
-		if (GetSkillCdTimeLeft (skillKindId) > 0) {
-			return SKILL_CAST_RESULT.IN_CD;
 		}
 
 		return SKILL_CAST_RESULT.SUCCESS;
 	}
 
-	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target) {
+	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target = null) {
 		SkillBase skill;
-		var skillCreateResult = CreateSkill(skillKindId, target, out skill);
+		var skillCreateResult = CreateSkill(skillKindId, ref target, out skill);
 		if (skillCreateResult != SKILL_CAST_RESULT.SUCCESS) {
 			return skillCreateResult;
 		}
@@ -265,13 +304,13 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	protected virtual void SingSkill (SkillBase skill, CharacterBase target) {
-		if (skill.singTime.Value == 0) {
+		if (skill.SingTime == 0) {
 			CastSkillAfterSinging(skill, target);	
 		} else {
 			isSingingSkill = true;
-			skillSingTime = skill.singTime.Value;
-			skillSingTimeLeft = skill.singTime.Value;
-			onSkillSingOk_inner = () => {
+			skillSingTime = skill.SingTime;
+			skillSingTimeLeft = skill.SingTime;
+			onSkillSingOkClosure = () => {
 				CastSkillAfterSinging(skill, target);	
 			};
 		}
@@ -285,10 +324,10 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 	protected void CastSkillAfterSinging(SkillBase skill, CharacterBase target) {
 		// mana cost
-		AddProperty(PROPERTY.MP, -skill.manaCost.Value);
+		AddProperty(PROPERTY.MP, -skill.ManaCost);
 
 		// cd
-		SetSkillCd(skill.Config.kindId, skill.cdTime.Value);
+		SetSkillCd(skill.Config.kindId, skill.CdTime);
 
 		AddGcd ();
 
@@ -357,10 +396,10 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	#endregion
 
 	#region target
-	CharacterBase target;
-	public CharacterBase Target {
+	CharacterBase selectedTarget;
+	public CharacterBase SelectedTarget {
 		get {
-			return target;
+			return selectedTarget;
 		}
 	}
 	public BaseDelegateV<CharacterBase, CharacterBase> onTargetSwitched;
@@ -368,16 +407,16 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		SelectTarget (null);
 	}
 	public void SelectTarget(CharacterBase newTarget) {
-		if (target == newTarget) {
+		if (selectedTarget == newTarget) {
 			return;
 		}
 
-		if (target != null) {
-			target.onDead -= OnTargetDead;
+		if (selectedTarget != null) {
+			selectedTarget.onDead -= OnTargetDead;
 		}
 
-		CharacterBase oriTarget = target;
-		target = newTarget;
+		CharacterBase oriTarget = selectedTarget;
+		selectedTarget = newTarget;
 
 		if (newTarget != null) {
 			newTarget.onDead += OnTargetDead;
@@ -389,34 +428,70 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 	#endregion
 
-	#region damage
-	public DataProcessDelegate<double> damageProcess;
+	#region change property by skill
+	public DataProcessDelegate<double, SkillBase> damageSufferedPreprocess;
+	public DataProcessDelegate<double, SkillBase> healthPreprocess;
 	public BaseDelegateV<int, SkillBase> onDamaged;
+	public BaseDelegateV<int, SkillBase> onHealthed;
 	public BaseDelegateV<SkillBase> onDead;
 
-	public void Damage(double damageValue, SkillBase skill) {
-		if (damageProcess != null) {
-			damageProcess (ref damageValue);
-		}
-		int realDamage = (int)damageValue;
-		AddProperty (PROPERTY.HP, -realDamage);
-		if (onDamaged != null) {
-			onDamaged (realDamage, skill);
+	public void ChangeMpBySkill (double value, SkillBase skill) {
+		int intValue = (int)value;
+		AddProperty (PROPERTY.MP, intValue);
+	}
+
+	public void Health(double value, SkillBase skill) {
+		if (healthPreprocess != null) {
+			healthPreprocess (ref value, skill);
 		}
 
-		if (GetProperty(PROPERTY.HP) <= 0) {
-			SetProperty (PROPERTY.HP, 0);
+		int intValue = (int)value;
+		AddProperty (PROPERTY.HP, intValue);
+
+		if (onHealthed != null) {
+			onHealthed (intValue, skill);
+		}
+	}
+
+	public void Damage(double value, SkillBase skill) {
+		if (damageSufferedPreprocess != null) {
+			damageSufferedPreprocess (ref value, skill);
+		}
+
+		int intValue = (int)value;
+		AddProperty (PROPERTY.HP, -intValue);
+
+		if (onDamaged != null) {
+			onDamaged (intValue, skill);
+		}
+
+		if (Hp <= 0) {
 			Die (skill);
 		}
 	}
 
 	protected virtual void Die (SkillBase skill) {
 		isDead = true;
-
+		Destroy ();
 		if (onDead != null) {
 			onDead (skill);
 		}
-		Destroy ();
 	}
+	#endregion
+
+	#region AI
+
+	AiBase ai;
+	public void SetAi (AiBase ai) {
+		this.ai = ai;
+		ai.Control (this);
+	}
+	public void RemoveAi () {
+		if (ai != null) {
+			ai.Remove ();
+			ai = null;
+		}
+	}
+
 	#endregion
 }

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BuffDot : BuffBase {
+public class BuffHealth : BuffBase {
 	protected override void Effective () {
-		target.Damage (effectValue.Value * StackedCount, this);
+		Health (BuffConfig.intArgs[0] * StackedCount);
 	}
 }

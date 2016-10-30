@@ -7,15 +7,11 @@ public class CharacterFactory : FactoryBase<CharacterFactory, CharacterBase> {
 	}
 
 	protected override CharacterBase CreateObject (string kindId) {
-		CharacterBase ret = null;
-		switch (kindId) {
-		case "character_0":
-			ret = new Warrior ();
-			break;
-		case "character_1":
-			ret = new TestMonster ();
-			break;
+		var config = GetConfig (kindId) as CharacterConfigBase;
+		if (config == null) {
+			return null;
+		} else {
+			return DataFunc.CreateObject (config.characterType) as CharacterBase;
 		}
-		return ret;
 	}
 }

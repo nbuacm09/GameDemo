@@ -74,7 +74,7 @@ public abstract class BuffBase : SkillBase {
 		var characterBuff = target.GetBuff (BuffConfig.kindId, caster) as BuffBase;
 		if (characterBuff == null) {
 			target.AddBuff (this);
-			target.onDead += OnCharacterDead;
+			target.onDead += OnTargetDead;
 			TimeManager.RegistBaseObject (this);
 			OnBuffPastedOnCharacter ();
 		} else {
@@ -82,7 +82,7 @@ public abstract class BuffBase : SkillBase {
 		}
 	}
 
-	void OnCharacterDead (SkillBase skill) {
+	void OnTargetDead (SkillBase skill) {
 		Remove ();
 	}
 
@@ -103,10 +103,11 @@ public abstract class BuffBase : SkillBase {
 
 	void RefreshTimeLeft () {
 		passedTime = 0;
+		latestEffectTime = 0;
 		SetTimeLeft (duration.Value);
 	}
 
-	public override void Update(long deltaTime) {
+	protected override void Update(long deltaTime) {
 		passedTime += deltaTime;
 		AddTimeLeft (-deltaTime);
 
@@ -127,13 +128,20 @@ public abstract class BuffBase : SkillBase {
 		return effectInterval.Value > 0;
 	}
 
+	protected override void UnregisterAllDelegates () {
+		base.UnregisterAllDelegates ();
+		if (target != null) {
+			target.onDead -= OnTargetDead;
+		}
+		TimeManager.UnregistBaseObject (this);
+	}
+
 	void Remove (bool timeOver) {
 		target.RemoveBuff (this);
-		TimeManager.UnregistBaseObject (this);
+		Destroy ();
 		if (onBuffRemoved != null) {
 			onBuffRemoved (timeOver);
 		}
-		Destroy ();
 	}
 
 	public void Remove () {

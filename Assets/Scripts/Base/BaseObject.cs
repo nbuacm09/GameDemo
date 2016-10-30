@@ -7,19 +7,31 @@ public abstract class BaseObject {
 	public long GetId () {
 		return id;
 	}
-
+	bool isDestroyed;
+	public bool IsDestroyed {
+		get {
+			return isDestroyed;
+		}
+	}
 	public BaseDelegate onDestroy;
 
 	public BaseObject() {
 		id = idCreator++;
 	}
 
-	public virtual void Update(long deltaTime) {
-		
+	public void TimeManagerUpdate(long deltaTime) {
+		if (IsDestroyed) {
+			return;
+		}
+		Update (deltaTime);
+	}
+	protected virtual void Update(long deltaTime) {
+
 	}
 
 	protected virtual void Destroy () {
 		UnregisterAllDelegates ();
+		isDestroyed = true;
 		if (onDestroy != null) {
 			onDestroy ();
 		}

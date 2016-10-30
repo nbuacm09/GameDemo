@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SkillPunch : SkillBase {
+public class SkillHealth : SkillBase {
 	protected override void Effective () {
-		target.Damage (effectValue.Value, this);
+		Health (SkillConfig.intArgs[0]);
 	}
 }

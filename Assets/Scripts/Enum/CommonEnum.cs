@@ -1,9 +1,6 @@
-﻿public enum EFFECT_PROPERTY {
-	NO,
-	FIRE,
-	ICE,
-	LIGHT,
-	DARK
+﻿public enum EFFECT_TYPE {
+	HEALTH,
+	DAMAGE
 }
 
 public enum PROPERTY {
@@ -21,11 +18,6 @@ public enum SKILL_CAST_RESULT {
 	IS_SINGING,
 	DISABLE,
 	TARGET_IS_DEAD
-}
-
-public enum BATTLE_GROUP {
-	ENEMY,
-	PLAYER
 }
 
 public enum BATTLE_JOB {

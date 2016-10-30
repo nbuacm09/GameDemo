@@ -41,7 +41,7 @@ public class TimeManager : MonoBehaviour
 			if (timeObjects.ContainsKey(obj.GetId()) == false) {
 				continue;
 			}
-			obj.Update (deltaTime);
+			obj.TimeManagerUpdate (deltaTime);
 		}
 	}
 
