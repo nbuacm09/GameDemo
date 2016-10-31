@@ -10,7 +10,6 @@ public class CharacterPropertyBar : CharacterInfoUIBase {
 
 	protected override void Init () {
 		processBarInterface = processBar.GetComponent<IProcessable> ();
-		RefreshUI (true);
 	}
 
 	protected override void ClearOriginalCharacterInfo () {

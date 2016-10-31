@@ -12,24 +12,25 @@ public abstract class CharacterInfoUIBase : MonoBehaviour {
 		}
 	}
 
-	bool isInit;
+	bool isInit = false;
 
 	public void SetCharacter (CharacterBase character) {
 		if (this.character != null) {
 			ClearOriginalCharacterInfo ();
 		}
 		this.character = character;
-		if (isInit == false) {
-			isInit = true;
-			Init ();
-		}
+		TryInit ();
 		if (this.character != null) {
 			SetNewCharacterInfo ();
 		}
 	}
 
 	void Start () {
-		if (isInit == false) {
+		TryInit ();
+	}
+
+	void TryInit () {
+		if (isInit == false && character != null) {
 			isInit = true;
 			Init ();
 		}

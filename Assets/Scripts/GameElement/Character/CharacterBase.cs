@@ -138,12 +138,17 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 	Dictionary<string, long> skillCdTimeLeftList = new Dictionary<string, long> ();
 	Dictionary<string, long> skillCdTimeList = new Dictionary<string, long> ();
+	long publicCdTimeLeft;
 	public DataProcessDelegate<SkillBase> castedSkillProcess;
 	public BaseDelegateV<string> onSkillLearned;
 	public BaseDelegateV<string> onSkillCdOk;
 	protected BaseDelegate onSkillSingOkClosure;
 	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> onSkillCasted;
 	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> beforeSkillCasted;
+
+	long GetPublicCdTime () {
+		return 1000;
+	}
 
 	bool isSingingSkill;
 	public bool IsSingingSkill {
@@ -171,9 +176,14 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	void CancelSinging () {
-		isSingingSkill = false;
-		onSkillSingOkClosure = null;
+	public bool CancelSinging () {
+		if (isSingingSkill) {
+			publicCdTimeLeft = 0;
+			isSingingSkill = false;
+			onSkillSingOkClosure = null;
+			return true;
+		}
+		return false;
 	}
 
 	void UpdateSkillSing (long deltaTime) {
@@ -217,6 +227,11 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 					onSkillCdOk (skillKindId);
 				}
 			}
+		}
+
+		publicCdTimeLeft -= deltaTime;
+		if (publicCdTimeLeft < 0) {
+			publicCdTimeLeft = 0;
 		}
 	}
 
@@ -304,6 +319,8 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	protected virtual void SingSkill (SkillBase skill, CharacterBase target) {
+		RefreshPublicCd ();
+
 		if (skill.SingTime == 0) {
 			CastSkillAfterSinging(skill, target);	
 		} else {
@@ -316,10 +333,8 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	void AddGcd () {
-		foreach (var skillKindId in skillList) {
-			SetSkillCd (skillKindId, 1000);
-		}
+	void RefreshPublicCd () {
+		publicCdTimeLeft = GetPublicCdTime();
 	}
 
 	protected void CastSkillAfterSinging(SkillBase skill, CharacterBase target) {
@@ -328,8 +343,6 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 		// cd
 		SetSkillCd(skill.Config.kindId, skill.CdTime);
-
-		AddGcd ();
 
 		if (onSkillCasted != null) {
 			onSkillCasted (this, target, skill);
@@ -350,19 +363,29 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	public long GetSkillCdTimeLeft (string skillKindId) {
+		long ret = 0;
 		if (skillCdTimeLeftList.ContainsKey(skillKindId)) {
-			return skillCdTimeLeftList [skillKindId];
+			ret = skillCdTimeLeftList [skillKindId];
 		} else {
-			return 0;
+			ret = 0;
 		}
+
+		return  MathFunc.Max<long>(ret, publicCdTimeLeft);
 	}
 
 	public long GetSkillCdTime (string skillKindId) {
+		long ret = 0;
 		if (skillCdTimeList.ContainsKey(skillKindId)) {
-			return skillCdTimeList [skillKindId];
+			ret = skillCdTimeList [skillKindId];
 		} else {
-			return 0;
+			ret = 0;
 		}
+
+		if (publicCdTimeLeft > 0) {
+			ret = MathFunc.Max<long> (ret, GetPublicCdTime ());
+		}
+
+		return ret;
 	}
 	#endregion
 
