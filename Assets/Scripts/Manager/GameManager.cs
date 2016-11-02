@@ -18,11 +18,22 @@ public class GameManager : Singleton<GameManager> {
 		currentBattle = new Battle ();
 		currentBattle.RandomInit ();
 		currentBattle.onGameEnd += OnGameEnd;
+
+		GameStart ();
 	}
 
 	void OnGameEnd (bool win) {
 		currentBattle.onGameEnd -= OnGameEnd;
 		currentBattle = null;
+		GameEnd ();
 		SceneManager.LoadScene ("Entry");
+	}
+
+	void GameStart () {
+		GameTimeManager.GetInstance ().Start ();
+	}
+
+	void GameEnd () {
+		GameTimeManager.GetInstance ().Stop ();
 	}
 }

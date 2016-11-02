@@ -23,7 +23,7 @@ public class BuffView : MonoBehaviour {
 			return;
 		}
 
-		SetTimeLeftPercent ((float)buff.PassedTime / (buff.TimeLeft + buff.PassedTime));
+		SetTimeLeftPercent ((double)buff.TimeLeftPercent);
 	}
 
 	protected virtual void OnDestroy () {
@@ -52,8 +52,8 @@ public class BuffView : MonoBehaviour {
 		Destroy (gameObject);
 	}
 
-	void SetTimeLeftPercent (float percent) {
-		mask.fillAmount = percent;
+	void SetTimeLeftPercent (double percent) {
+		mask.fillAmount = (float)percent;
 	}
 
 	void SetStackedCount (int stackedCount) {

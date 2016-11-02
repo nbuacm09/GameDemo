@@ -33,10 +33,27 @@ public abstract class BuffBase : SkillBase {
 			return timeLeft;
 		}
 	}
+
+	public double TimeLeftPercent {
+		get {
+			if (IsEndless) {
+				return 0;
+			} else {
+				return (double)PassedTime / (TimeLeft + PassedTime);
+			}
+		}
+	}
+
 	int stackedCount;
 	public int StackedCount{
 		get{
 			return stackedCount;
+		}
+	}
+
+	public bool IsEndless {
+		get {
+			return BuffConfig.isEndless;
 		}
 	}
 
@@ -67,7 +84,7 @@ public abstract class BuffBase : SkillBase {
 		maxStackedCount.Set (durationBuffConfig.maxStackedCount);
 	}
 
-	public override void CastTo(CharacterBase target, IAbleToCastSkill caster) {
+	public override void CastTo(IAbleToCastSkill caster, CharacterBase target) {
 		this.target = target;
 		this.caster = caster;
 		OnSkillCasted ();
@@ -75,7 +92,7 @@ public abstract class BuffBase : SkillBase {
 		if (characterBuff == null) {
 			target.AddBuff (this);
 			target.onDead += OnTargetDead;
-			TimeManager.RegistBaseObject (this);
+			GameTimeManager.RegistBaseObject (this);
 			OnBuffPastedOnCharacter ();
 		} else {
 			characterBuff.AddStacked ();
@@ -133,7 +150,7 @@ public abstract class BuffBase : SkillBase {
 		if (target != null) {
 			target.onDead -= OnTargetDead;
 		}
-		TimeManager.UnregistBaseObject (this);
+		GameTimeManager.UnregistBaseObject (this);
 	}
 
 	void Remove (bool timeOver) {
@@ -149,7 +166,11 @@ public abstract class BuffBase : SkillBase {
 	}
 
 	protected virtual bool CheckBuffOver () {
-		return timeLeft <= 0;
+		if (IsEndless) {
+			return false;
+		} else {
+			return timeLeft <= 0;
+		}
 	}
 
 	protected virtual int TryEffect(ref long latestEffectTime) {
@@ -171,12 +192,14 @@ public abstract class BuffBase : SkillBase {
 		return effectTimes;
 	}
 
-	public long SetTimeLeft(long val) {
+	public void SetTimeLeft(long val) {
+		if (IsEndless) {
+			return;
+		}
 		timeLeft = val;
 		if (onTimeLeftChanged != null) {
 			onTimeLeftChanged (timeLeft);
 		}
-		return timeLeft;
 	}
 
 	public long AddTimeLeft(long val) {

@@ -23,7 +23,7 @@ public class SkillButton : MonoBehaviour {
 		if (cdTime == 0) {
 			SetCdPercent (0);
 		} else {
-			SetCdPercent ((float)character.GetSkillCdTimeLeft (skill.kindId) / cdTime);
+			SetCdPercent ((double)character.GetSkillCdTimeLeft (skill.kindId) / cdTime);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class SkillButton : MonoBehaviour {
 		SetCdPercent (0);
 	}
 
-	void SetCdPercent (float val) {
-		maskImage.fillAmount = val;
+	void SetCdPercent (double val) {
+		maskImage.fillAmount = (float)val;
 	}
 }

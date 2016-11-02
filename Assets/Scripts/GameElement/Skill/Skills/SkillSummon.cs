@@ -15,7 +15,7 @@ public class SkillSummon : SkillBase {
 		battle.AddFollower(target, follower);
 	}
 
-	public override SKILL_CAST_RESULT CheckBeforeCast(CharacterBase caster, CharacterBase target) {
+	public override SKILL_CAST_RESULT CheckBeforeCast(CharacterBase target, IAbleToCastSkill caster) {
 		var battle = GameManager.GetInstance ().CurrentBattle;
 		Debug.Assert (battle != null);
 		var battleGroup = battle.GetBattleGroup (target);

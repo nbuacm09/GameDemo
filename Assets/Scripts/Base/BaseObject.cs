@@ -4,8 +4,10 @@ using System.Collections;
 public abstract class BaseObject {
 	static long idCreator;
 	long id;
-	public long GetId () {
-		return id;
+	public long Id {
+		get {
+			return id;
+		}
 	}
 	bool isDestroyed;
 	public bool IsDestroyed {

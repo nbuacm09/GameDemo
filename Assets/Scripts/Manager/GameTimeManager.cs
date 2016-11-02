@@ -3,14 +3,27 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class TimeManager : MonoBehaviour
+public class GameTimeManager : MonoBehaviour
 {
-	static TimeManager instance = null;
-	float duration = 0;
+	static GameTimeManager instance = null;
+	double duration = 0;
 	long lastUpdateTime = 0;
 	static Dictionary<long, WeakReference> timeObjects = new Dictionary<long, WeakReference> ();
 
-	static public TimeManager GetInstance()
+	bool isGaming = false;
+	public bool IsGaming {
+		get {
+			return isGaming;
+		}
+	}
+	double gameSpeed = 1;
+	public double GameSpeed {
+		get {
+			return gameSpeed;
+		}
+	}
+
+	static public GameTimeManager GetInstance()
 	{
 		return instance;
 	}
@@ -23,7 +36,10 @@ public class TimeManager : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		duration += Time.deltaTime;
+		if (isGaming == false) {
+			return;
+		}
+		duration += Time.deltaTime * gameSpeed;
 		long curTime = (long)(duration * 1000);
 		long deltaTime = curTime - lastUpdateTime;
 		lastUpdateTime = curTime;
@@ -38,7 +54,7 @@ public class TimeManager : MonoBehaviour
 				continue;
 			}
 			BaseObject obj = objs [i].Target as BaseObject;
-			if (timeObjects.ContainsKey(obj.GetId()) == false) {
+			if (timeObjects.ContainsKey(obj.Id) == false) {
 				continue;
 			}
 			obj.TimeManagerUpdate (deltaTime);
@@ -47,11 +63,23 @@ public class TimeManager : MonoBehaviour
 
 	public static void RegistBaseObject(BaseObject obj)
 	{
-		timeObjects[obj.GetId()] = new WeakReference(obj);
+		timeObjects[obj.Id] = new WeakReference(obj);
 	}
 
 	public static void UnregistBaseObject(BaseObject obj)
 	{
-		timeObjects.Remove (obj.GetId());
+		timeObjects.Remove (obj.Id);
+	}
+
+	public void Start () {
+		isGaming = true;
+	}
+
+	public void Stop () {
+		isGaming = false;
+	}
+
+	public void SetSpeed (double speed) {
+		gameSpeed = speed;
 	}
 }

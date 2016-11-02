@@ -39,12 +39,18 @@ public abstract class SkillBase : FactoryObject {
 		this.casterInfluence = casterInfluence;
 	}
 
-	protected void Damage (double originalDamage) {
+	protected void Damage (double originalDamage, CharacterBase target = null) {
+		if (target == null) {
+			target = this.target;
+		}
 		double damage = (originalDamage + casterInfluence.damageAdd) * casterInfluence.damageMulti;
 		target.Damage (damage, this);
 	}
 
-	protected void Health (double originalHealth) {
+	protected void Health (double originalHealth, CharacterBase target = null) {
+		if (target == null) {
+			target = this.target;
+		}
 		double health = (originalHealth + casterInfluence.healthAdd) * casterInfluence.healthMulti;
 		target.Health (health, this);
 	}
@@ -73,7 +79,7 @@ public abstract class SkillBase : FactoryObject {
 		
 	}
 
-	public virtual SKILL_CAST_RESULT CheckBeforeCast(CharacterBase caster, CharacterBase target) {
+	public virtual SKILL_CAST_RESULT CheckBeforeCast(CharacterBase target, IAbleToCastSkill caster) {
 		return SKILL_CAST_RESULT.SUCCESS;
 	}
 
@@ -83,7 +89,7 @@ public abstract class SkillBase : FactoryObject {
 		Debug.Assert (skillConfig != null);
 	}
 
-	public virtual void CastTo(CharacterBase target, IAbleToCastSkill caster) {
+	public virtual void CastTo(IAbleToCastSkill caster, CharacterBase target) {
 		this.target = target;
 		this.caster = caster;
 

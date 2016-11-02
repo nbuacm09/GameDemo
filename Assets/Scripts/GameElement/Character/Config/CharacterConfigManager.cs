@@ -25,6 +25,7 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.mp = 100;
 		characterCfg.skillKindIdList.Add ("skill_SkillDamage_0");
 		characterCfg.skillKindIdList.Add ("skill_SkillSummon_0");
+		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_0");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 
 		characterCfg = new CharacterConfigBase ();
@@ -33,7 +34,7 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.name = "Big Mage";
 		characterCfg.hp = 1000;
 		characterCfg.mp = 1000;
-//		characterCfg.skillKindIdList.Add ("skill_SkillSummon_0");
+		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_1");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 
 		characterCfg = new CharacterConfigBase ();
@@ -42,7 +43,7 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.name = "Small Gost";
 		characterCfg.hp = 100;
 		characterCfg.mp = 200;
-		characterCfg.skillKindIdList.Add ("skill_SkillSummon_0");
+		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_2");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 	}
 

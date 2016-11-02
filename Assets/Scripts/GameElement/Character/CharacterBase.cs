@@ -10,11 +10,11 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	}
 
 	protected CharacterBase () {
-		TimeManager.RegistBaseObject (this);
+		GameTimeManager.RegistBaseObject (this);
 	}
 
 	~CharacterBase () {
-		TimeManager.UnregistBaseObject (this);
+		GameTimeManager.UnregistBaseObject (this);
 	}
 
 	bool isDead;
@@ -36,6 +36,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 		InitProperty (characterConfig);
 		InitLearnedSkill (characterConfig);
+		InitTalent (characterConfig);
 	}
 
 	protected override void UnregisterAllDelegates () {
@@ -129,6 +130,18 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 
 	#endregion
 
+	#region talent
+
+	void InitTalent (CharacterConfigBase characterConfig) {
+		foreach (var talentKindId in characterConfig.talentKindIdList) {
+			SkillBase talent = SkillFactory.GetInstance ().Create (talentKindId);
+			talent.CastTo (this, this);
+		}
+	}
+
+
+	#endregion
+
 	#region skill
 	HashSet<string> skillList = new HashSet<string> ();
 	public HashSet<string> SkillList{
@@ -143,8 +156,8 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 	public BaseDelegateV<string> onSkillLearned;
 	public BaseDelegateV<string> onSkillCdOk;
 	protected BaseDelegate onSkillSingOkClosure;
-	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> onSkillCasted;
-	public BaseDelegateV<IAbleToCastSkill, CharacterBase, SkillBase> beforeSkillCasted;
+	public BaseDelegateV<IAbleToCastSkill, SkillBase, CharacterBase> onSkillCasted;
+	public BaseDelegateV<IAbleToCastSkill, SkillBase, CharacterBase> beforeSkillCasted;
 
 	long GetPublicCdTime () {
 		return 1000;
@@ -290,7 +303,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 
 		// special check by different buff.
-		var buffCheckResult = skill.CheckBeforeCast (this, target);
+		var buffCheckResult = skill.CheckBeforeCast (target, this);
 		if (buffCheckResult != SKILL_CAST_RESULT.SUCCESS) {
 			return buffCheckResult;
 		}
@@ -302,6 +315,18 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		return SKILL_CAST_RESULT.SUCCESS;
 	}
 
+	public virtual SKILL_CAST_RESULT CheckAfterSinging(SkillBase skill, CharacterBase target) {
+		// special check by different buff.
+		var buffCheckResult = skill.CheckBeforeCast (target, this);
+		if (buffCheckResult != SKILL_CAST_RESULT.SUCCESS) {
+			return buffCheckResult;
+		}
+		if (skill.ManaCost > Mp) {
+			return SKILL_CAST_RESULT.NOT_ENOUGH_MANA;
+		}
+		return SKILL_CAST_RESULT.SUCCESS;
+	}
+
 	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target = null) {
 		SkillBase skill;
 		var skillCreateResult = CreateSkill(skillKindId, ref target, out skill);
@@ -310,12 +335,12 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 
 		if (beforeSkillCasted != null) {
-			beforeSkillCasted (this, target, skill);
+			beforeSkillCasted (this, skill, target);
 		}
 
 		SingSkill (skill, target);
 
-		return SKILL_CAST_RESULT.SUCCESS;
+		return CheckAfterSinging (skill, target);
 	}
 
 	protected virtual void SingSkill (SkillBase skill, CharacterBase target) {
@@ -345,10 +370,10 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		SetSkillCd(skill.Config.kindId, skill.CdTime);
 
 		if (onSkillCasted != null) {
-			onSkillCasted (this, target, skill);
+			onSkillCasted (this, skill, target);
 		}
 
-		skill.CastTo (target, this);
+		skill.CastTo (this, target);
 	}
 
 	public bool SkillIsLearned (string skillKindId) {

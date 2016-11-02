@@ -15,15 +15,15 @@ public static class UIFunc {
 
 	}
 
-	public static void SetScaleX(this GameObject obj, float scaleX) {
+	public static void SetScaleX(this GameObject obj, double scaleX) {
 		var scale = obj.transform.localScale;
-		scale.x = scaleX;
+		scale.x = (float)scaleX;
 		obj.transform.localScale = scale;
 	}
 
-	public static void SetScaleY(this GameObject obj, float scaleY) {
+	public static void SetScaleY(this GameObject obj, double scaleY) {
 		var scale = obj.transform.localScale;
-		scale.y = scaleY;
+		scale.y = (float)scaleY;
 		obj.transform.localScale = scale;
 	}
 }

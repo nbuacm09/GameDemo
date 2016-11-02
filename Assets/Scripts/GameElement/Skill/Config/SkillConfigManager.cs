@@ -34,9 +34,9 @@ public class SkillConfigManager : Singleton<SkillConfigManager> {
 		skillCfg.skillType = "SkillSummon";
 		skillCfg.name = "summon";
 		skillCfg.stringArgs.Add("character_Monster_1");
-		skillCfg.manaCost = 100;
+		skillCfg.manaCost = 30;
 		skillCfg.cdTime = 0;
-		skillCfg.singTime = 5000;
+		skillCfg.singTime = 3000;
 		skillCfg.canTargetEnemy = false;
 		skillCfg.canTargetFriend = true;
 		skillConfigs.Add (skillCfg.kindId, skillCfg);
@@ -84,6 +84,41 @@ public class SkillConfigManager : Singleton<SkillConfigManager> {
 		buffCfg.canTargetFriend = true;
 		skillConfigs.Add (buffCfg.kindId, buffCfg);
 
+		buffCfg = new BuffConfigBase();
+		buffCfg.kindId = "buff_BuffWeapon_0";
+		buffCfg.skillType = "BuffWeapon";
+		buffCfg.name = "hammer";
+		buffCfg.isEndless = true;
+		buffCfg.effectInterval = 2000;
+		buffCfg.intArgs.Add(50);
+		buffCfg.maxStackedCount = 1;
+		buffCfg.canTargetEnemy = false;
+		buffCfg.canTargetFriend = true;
+		skillConfigs.Add (buffCfg.kindId, buffCfg);
+
+		buffCfg = new BuffConfigBase();
+		buffCfg.kindId = "buff_BuffWeapon_1";
+		buffCfg.skillType = "BuffWeapon";
+		buffCfg.name = "knife";
+		buffCfg.isEndless = true;
+		buffCfg.effectInterval = 500;
+		buffCfg.intArgs.Add(20);
+		buffCfg.maxStackedCount = 1;
+		buffCfg.canTargetEnemy = false;
+		buffCfg.canTargetFriend = true;
+		skillConfigs.Add (buffCfg.kindId, buffCfg);
+
+		buffCfg = new BuffConfigBase();
+		buffCfg.kindId = "buff_BuffWeapon_2";
+		buffCfg.skillType = "BuffWeapon";
+		buffCfg.name = "broken knife";
+		buffCfg.duration = 20000;
+		buffCfg.effectInterval = 500;
+		buffCfg.intArgs.Add(20);
+		buffCfg.maxStackedCount = 1;
+		buffCfg.canTargetEnemy = false;
+		buffCfg.canTargetFriend = true;
+		skillConfigs.Add (buffCfg.kindId, buffCfg);
 	}
 
 	public SkillConfigBase GetSkillConfig (string kindId) {
