@@ -20,7 +20,7 @@ public class CharacterSingView : CharacterInfoUIBase {
 		}
 		if (character.IsSingingSkill) {
 			singBar.SetActive (true);
-			singProcessBar.SetProcess (1 - (double)character.SkillSingTimeLeft / character.SkillSingTime);
+			singProcessBar.SetProcess (1 - (float)character.SkillSingTimeLeft / character.SkillSingTime);
 		} else {
 			singBar.SetActive (false);
 		}

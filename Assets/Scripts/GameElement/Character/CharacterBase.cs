@@ -254,7 +254,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 	}
 
-	public virtual SKILL_CAST_RESULT CreateSkill(string skillKindId, ref CharacterBase target, out SkillBase skill) {
+	public virtual SKILL_CAST_RESULT TryCreateSkill(string skillKindId, ref CharacterBase target, out SkillBase skill) {
 		if (target == null) {
 			target = SelectedTarget;
 		}
@@ -297,10 +297,7 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		}
 		#endregion
 
-		skill = SkillFactory.GetInstance ().Create (skillKindId);
-		if (castedSkillProcess != null) {
-			castedSkillProcess (ref skill);
-		}
+		skill = CreateSkill (skillKindId);
 
 		// special check by different buff.
 		var buffCheckResult = skill.CheckBeforeCast (target, this);
@@ -327,9 +324,17 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		return SKILL_CAST_RESULT.SUCCESS;
 	}
 
+	public SkillBase CreateSkill (string skillKindId) {
+		var ret = SkillFactory.GetInstance ().Create (skillKindId);
+		if (castedSkillProcess != null) {
+			castedSkillProcess (ref ret);
+		}
+		return ret;
+	}
+
 	public virtual SKILL_CAST_RESULT CastSkill(string skillKindId, CharacterBase target = null) {
 		SkillBase skill;
-		var skillCreateResult = CreateSkill(skillKindId, ref target, out skill);
+		var skillCreateResult = TryCreateSkill(skillKindId, ref target, out skill);
 		if (skillCreateResult != SKILL_CAST_RESULT.SUCCESS) {
 			return skillCreateResult;
 		}
@@ -373,7 +378,23 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 			onSkillCasted (this, skill, target);
 		}
 
-		skill.CastTo (this, target);
+		if (skill.SkillConfig.isAoe) {
+			var battle = GameManager.GetInstance ().CurrentBattle;
+			var battleGroup = battle.GetBattleGroup (target);
+			List<CharacterBase> targets = new List<CharacterBase> ();
+			foreach (var member in battleGroup.GetMembers()) {
+				targets.Add (member);
+			}
+			foreach (var member in targets) {
+				if (member.IsDead) {
+					continue;
+				}
+				var aoeSkill = CreateSkill (skill.Config.kindId);
+				aoeSkill.CastTo (this, member);
+			}
+		} else {
+			skill.CastTo (this, target);
+		}
 	}
 
 	public bool SkillIsLearned (string skillKindId) {
@@ -538,6 +559,12 @@ public abstract class CharacterBase : FactoryObject, IAbleToCastSkill {
 		if (ai != null) {
 			ai.Remove ();
 			ai = null;
+		}
+	}
+
+	public void EnableAi (bool val) {
+		if (ai != null) {
+			ai.EnableAi (val);
 		}
 	}
 

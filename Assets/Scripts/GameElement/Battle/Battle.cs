@@ -131,7 +131,6 @@ public class Battle : BaseObject {
 		// group 1
 		CharacterBase enemy;
 		enemy = CharacterFactory.GetInstance ().Create ("character_Monster_0");
-		enemy.SetAi (new AiBase ());
 		AddGroup (1, enemy);
 		OnCharacteroInitFinished ();
 	}
@@ -212,6 +211,7 @@ public class Battle : BaseObject {
 	public void SetControlledCharacter (CharacterBase character) {
 		UnregisterControlledCharacterDelegate ();
 		controlledCharacter = character;
+		character.EnableAi (false);
 		if (onControlledCharacterChanged != null) {
 			onControlledCharacterChanged (character);
 		}

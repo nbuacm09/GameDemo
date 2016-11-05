@@ -24,17 +24,20 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.hp = 1000;
 		characterCfg.mp = 100;
 		characterCfg.skillKindIdList.Add ("skill_SkillDamage_0");
-		characterCfg.skillKindIdList.Add ("skill_SkillSummon_0");
-		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_0");
+		characterCfg.skillKindIdList.Add ("skill_SkillDamage_1");
+		characterCfg.skillKindIdList.Add ("skill_SkillSummon_1");
+		characterCfg.talentKindIdList.Add ("buff_BuffManaAdd_0");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 
 		characterCfg = new CharacterConfigBase ();
 		characterCfg.kindId = "character_Monster_0";
 		characterCfg.characterType = "Monster";
 		characterCfg.name = "Big Mage";
-		characterCfg.hp = 1000;
+		characterCfg.hp = 500;
 		characterCfg.mp = 1000;
-		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_1");
+		characterCfg.skillKindIdList.Add ("buff_BuffDamage_0");
+		characterCfg.skillKindIdList.Add ("skill_SkillSummon_1");
+		characterCfg.talentKindIdList.Add ("buff_BuffManaAdd_0");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 
 		characterCfg = new CharacterConfigBase ();
@@ -43,7 +46,18 @@ public class CharacterConfigManager : Singleton<CharacterConfigManager> {
 		characterCfg.name = "Small Gost";
 		characterCfg.hp = 100;
 		characterCfg.mp = 200;
-		characterCfg.talentKindIdList.Add ("buff_BuffWeapon_2");
+		characterCfg.skillKindIdList.Add ("skill_SkillDamage_0");
+		characterConfigs.Add (characterCfg.kindId, characterCfg);
+
+		characterCfg = new CharacterConfigBase ();
+		characterCfg.kindId = "character_Monster_2";
+		characterCfg.characterType = "Monster";
+		characterCfg.name = "boss healther";
+		characterCfg.hp = 10;
+		characterCfg.mp = 100;
+		characterCfg.ai = "AiBossHealther";
+		characterCfg.skillKindIdList.Add ("buff_BuffHealth_0");
+		characterCfg.talentKindIdList.Add ("buff_BuffManaAdd_0");
 		characterConfigs.Add (characterCfg.kindId, characterCfg);
 	}
 

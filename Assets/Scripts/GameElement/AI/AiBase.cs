@@ -2,14 +2,20 @@
 using System.Collections;
 
 public class AiBase : BaseObject {
-	CharacterBase character;
+	protected CharacterBase character;
 	public CharacterBase Character {
 		get {
 			return character;
 		}
 	}
 
-	Battle battle;
+	protected Battle battle;
+
+	bool aiEnabled = true;
+
+	public void EnableAi (bool val) {
+		aiEnabled = val;
+	}
 
 	protected override void UnregisterAllDelegates () {
 		if (character != null) {
@@ -37,6 +43,9 @@ public class AiBase : BaseObject {
 	}
 
 	protected override void Update (long deltaTime) {
+		if (aiEnabled == false) {
+			return;
+		}
 		if (character.SelectedTarget == null) {
 			var randomTarget = GetRandomTarget ();
 			character.SelectTarget (randomTarget);
@@ -53,13 +62,16 @@ public class AiBase : BaseObject {
 		selectedTarget = GetRandomTarget ();
 
 		SkillBase temp;
+		int count = 0;
 		foreach (var skillKindId in character.SkillList) {
-			if (character.CreateSkill (skillKindId, ref selectedTarget, out temp) == SKILL_CAST_RESULT.SUCCESS) {
-				selectedSkillKindId = skillKindId;
-				return true;
+			if (character.TryCreateSkill (skillKindId, ref selectedTarget, out temp) == SKILL_CAST_RESULT.SUCCESS) {
+				count++;
+				if (Random.value <= 1.0f / count) {
+					selectedSkillKindId = skillKindId;
+				}
 			}
 		}
-		return false;
+		return count > 0;
 	}
 
 	CharacterBase GetRandomTarget () {
@@ -79,7 +91,6 @@ public class AiBase : BaseObject {
 				}
 			}
 		}
-
 		return null;
 	}
 }

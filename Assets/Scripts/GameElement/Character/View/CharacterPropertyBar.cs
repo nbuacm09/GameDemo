@@ -29,13 +29,13 @@ public class CharacterPropertyBar : CharacterInfoUIBase {
 	}
 
 	void RefreshUI (bool force = false) {
-		double process = 0;
+		float process = 0;
 		int val = character.GetProperty (property);
 		int maxVal = character.GetPropertyMaxValue (property);
 		if (maxVal == 0) {
 			process = 0;
 		} else {
-			process = (double)val / maxVal;
+			process = (float)val / maxVal;
 		}
 
 		if (processText != null) {

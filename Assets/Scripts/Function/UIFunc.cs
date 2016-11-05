@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Reflection;
 using System.Collections;
@@ -15,15 +16,36 @@ public static class UIFunc {
 
 	}
 
-	public static void SetScaleX(this GameObject obj, double scaleX) {
+	public static void SetScaleX(this GameObject obj, float scaleX) {
 		var scale = obj.transform.localScale;
-		scale.x = (float)scaleX;
+		scale.x = scaleX;
 		obj.transform.localScale = scale;
 	}
 
-	public static void SetScaleY(this GameObject obj, double scaleY) {
+	public static void SetScaleY(this GameObject obj, float scaleY) {
 		var scale = obj.transform.localScale;
-		scale.y = (float)scaleY;
+		scale.y = scaleY;
 		obj.transform.localScale = scale;
+	}
+
+	public static void SetScale(this GameObject obj, float scaleXY) {
+		var scale = obj.transform.localScale;
+		scale.x = scale.y = scaleXY;
+		obj.transform.localScale = scale;
+	}
+
+	public static void SetAlpha(this GameObject obj, float alpha) {
+		CanvasGroup cg = obj.GetComponent<CanvasGroup> ();
+		if (cg != null) {
+			cg.alpha = alpha;
+			return;
+		}
+		var graph = obj.GetComponent<MaskableGraphic> ();
+		if (graph != null) {
+			var color = graph.color;
+			color.a = alpha;
+			graph.color = color;
+			return;
+		}
 	}
 }

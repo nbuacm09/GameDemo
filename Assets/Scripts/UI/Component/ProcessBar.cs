@@ -4,12 +4,12 @@ using System.Collections;
 
 public class ProcessBar : MonoBehaviour, IProcessable {
 	[SerializeField] bool moveAnimation = false;
-	[SerializeField] double moveTime = 0.5;
+	[SerializeField] float moveTime = 0.5f;
 	[SerializeField] GameObject bar;
 
-	double currentProcess;
-	double targetProcess;
-	double moveSpeed;
+	float currentProcess;
+	float targetProcess;
+	float moveSpeed;
 	bool moving = false;
 	// Use this for initialization
 	void Start () {
@@ -19,7 +19,7 @@ public class ProcessBar : MonoBehaviour, IProcessable {
 	// Update is called once per frame
 	void Update () {
 		if (moving) {
-			double nextProcess = currentProcess + moveSpeed * Time.deltaTime;
+			float nextProcess = currentProcess + moveSpeed * Time.deltaTime;
 			if (moveSpeed == 0
 				|| moveSpeed > 0 && nextProcess >= targetProcess
 				|| moveSpeed < 0 && nextProcess <= targetProcess) {
@@ -30,11 +30,11 @@ public class ProcessBar : MonoBehaviour, IProcessable {
 		}
 	}
 
-	public void InitProcess(double process) {
+	public void InitProcess(float process) {
 		SetProcess (process, true);
 	}
 
-	public void SetProcess (double process, bool force = false) {
+	public void SetProcess (float process, bool force = false) {
 		if (force) {
 			moving = false;
 			RealSetProcess (process);
@@ -49,8 +49,8 @@ public class ProcessBar : MonoBehaviour, IProcessable {
 		}
 	}
 
-	void RealSetProcess (double process) {
-		process = MathFunc.Clamp<double> (process, 0, 1);
+	void RealSetProcess (float process) {
+		process = MathFunc.Clamp<float> (process, 0, 1);
 		GameObject realBar = bar == null ? gameObject : bar;
 		realBar.SetScaleX (process);
 		currentProcess = process;

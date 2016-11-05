@@ -11,6 +11,7 @@ public class SkillConfigBase : ConfigBaseObject {
 	public long singTime = 0;
 	public bool canTargetEnemy = true;
 	public bool canTargetFriend = false;
+	public bool isAoe = false;
 	public bool NeedTarget {
 		get {
 			return true;

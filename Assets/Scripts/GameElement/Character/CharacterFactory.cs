@@ -11,7 +11,15 @@ public class CharacterFactory : FactoryBase<CharacterFactory, CharacterBase> {
 		if (config == null) {
 			return null;
 		} else {
-			return DataFunc.CreateObject (config.characterType) as CharacterBase;
+			var character = DataFunc.CreateObject (config.characterType) as CharacterBase;
+			if (character != null) {
+				if (config.ai != "") {
+					character.SetAi (DataFunc.CreateObject (config.ai) as AiBase);
+				} else {
+					character.SetAi (new AiBase ());
+				}
+			}
+			return character;
 		}
 	}
 }

@@ -5,7 +5,6 @@ public class SkillSummon : SkillBase {
 	int groupId;
 	protected override void Effective () {
 		var summonedCharacter = CharacterFactory.GetInstance ().Create (SkillConfig.stringArgs [0]);
-		summonedCharacter.SetAi (new AiBase ());
 		Summon (summonedCharacter);
 	}
 
